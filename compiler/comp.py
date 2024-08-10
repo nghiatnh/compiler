@@ -316,9 +316,9 @@ def pl_comp_cond(fenv: Func, node):
 
 def pl_comp_loop(fenv: Func, node):
   _, cond, body = node
+  fenv.enter_scope()
   fenv.scope.loop_start = fenv.new_label()
   fenv.scope.loop_end = fenv.new_label()
-  fenv.enter_scope()
   fenv.set_label(fenv.scope.loop_start)
   _, var = pl_comp_expr(fenv, cond, allow_var=True)
   if var < 0:
