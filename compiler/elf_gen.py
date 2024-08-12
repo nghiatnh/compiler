@@ -1,15 +1,13 @@
-""" TODO
-  1. Why phdr has to include ELF file??
-"""
-
 import os
-import sys
 import numbers
 from constants import *
 from code_gen import CodeGen
-from parser import pl_parse_main
-from comp import pl_comp_main
+from parser import Parser
+from comp import Compiler
 from comp import Func
+import argparse
+import logging
+
 
 DEFAULT_ENTRY_POINT = 0x400000
 
@@ -25,18 +23,18 @@ DEFAULT_ENTRY_POINT = 0x400000
 
 
 def uint(n, x):
-  return x.to_bytes(n, 'little')
+  return x.to_bytes(n, "little")
 
 
 ELF64_TYPE_SIZE = {
-    'addr': 8,  # 8 unsigned program address
-    'off': 8,  # 8 unsigned file offset
-    'half': 2,  # 2 unsigned medium integer
-    'word': 4,  # 4 unsigned integer
-    'sword': 4,  # 4 signed integer
-    'xword': 8,  # 8 unsigned long integer
-    'sxword': 8,  # 8 signed long integer
-    'unsigned_char': 1,  # 1 unsigned small integer
+    "addr": 8,  # 8 unsigned program address
+    "off": 8,  # 8 unsigned file offset
+    "half": 2,  # 2 unsigned medium integer
+    "word": 4,  # 4 unsigned integer
+    "sword": 4,  # 4 signed integer
+    "xword": 8,  # 8 unsigned long integer
+    "sxword": 8,  # 8 signed long integer
+    "unsigned_char": 1,  # 1 unsigned small integer
 }
 
 
@@ -55,7 +53,7 @@ def serialize(x, elf64_type):
   size = to_size(elf64_type)
 
   if isinstance(x, numbers.Number):
-    return x.to_bytes(size, 'little')
+    return x.to_bytes(size, "little")
 
   elif isinstance(x, bytes):
     if len(x) != size:
@@ -69,38 +67,38 @@ def serialize(x, elf64_type):
 
 
 ELF64_EHDR = [
-    ('e_ident', 16),  # ELF identification (actually 16-length array of unsigned char)
-    ('e_type', 'half'),  # Object file type
-    ('e_machine', 'half'),  # Machine type
-    ('e_version', 'word'),  # Object file version
-    ('e_entry', 'addr'),  # Entry point address
-    ('e_phoff', 'off'),  # Program header offset
-    ('e_shoff', 'off'),  # Section header offset
-    ('e_flags', 'word'),  # Processor-specific flags
-    ('e_ehsize', 'half'),  # ELF header size
-    ('e_phentsize', 'half'),  # Size of program header entry
-    ('e_phnum', 'half'),  # Number of program header entries
-    ('e_shentsize', 'half'),  # Size of section header entry
-    ('e_shnum', 'half'),  # Number of section header entries
-    ('e_shstrndx', 'half'),  # Section name string table index
+    ("e_ident", 16),  # ELF identification (actually 16-length array of unsigned char)
+    ("e_type", "half"),  # Object file type
+    ("e_machine", "half"),  # Machine type
+    ("e_version", "word"),  # Object file version
+    ("e_entry", "addr"),  # Entry point address
+    ("e_phoff", "off"),  # Program header offset
+    ("e_shoff", "off"),  # Section header offset
+    ("e_flags", "word"),  # Processor-specific flags
+    ("e_ehsize", "half"),  # ELF header size
+    ("e_phentsize", "half"),  # Size of program header entry
+    ("e_phnum", "half"),  # Number of program header entries
+    ("e_shentsize", "half"),  # Size of section header entry
+    ("e_shnum", "half"),  # Number of section header entries
+    ("e_shstrndx", "half"),  # Section name string table index
 ]
 
 
 def e_ident():
-  return b''.join([
-      b'\x7FELF',  #  magic
-      b'\x02',  # ELF64
-      b'\x01',  # Little-endian
-      b'\x01',  # EI_ABIVERSION
-      b'\x00',  # ELFOSABI_HPUX ?? # ELFOSABI_SYSV (TODO \x04 instead? LINUX?)
-      b'\x00',  #  epends on EI_ABIVERSION
-      b'\x00' * 6,  #  Padding
-      b'\x00',  #  size of e_ident ??
+  return b"".join([
+      b"\x7FELF",  #  magic
+      b"\x02",  # ELF64
+      b"\x01",  # Little-endian
+      b"\x01",  # EI_ABIVERSION
+      b"\x00",  # ELFOSABI_HPUX ?? # ELFOSABI_SYSV (TODO \x04 instead? LINUX?)
+      b"\x00",  #  epends on EI_ABIVERSION
+      b"\x00" * 6,  #  Padding
+      b"\x00",  #  size of e_ident ??
   ])
 
 
 def serialize_struct(layout, values):
-  result = b''
+  result = b""
   for key, field_type in layout:
     result += serialize(values[key], field_type)
   return result
@@ -139,22 +137,22 @@ def elf64_ehdr():
 
 
 ELF64_PHDR = [
-    ('p_type', 'word'),  # Type of segment
-    ('p_flags', 'word'),  # Segment attributes
-    ('p_offset', 'off'),  # Offset in file
-    ('p_vaddr', 'addr'),  # Virtual address in memory
-    ('p_paddr', 'addr'),  # Reserved
-    ('p_filesz', 'xword'),  # Size of segment in file
-    ('p_memsz', 'xword'),  # Size of segment in memory
-    ('p_align', 'xword'),  # Alignment of segment
+    ("p_type", "word"),  # Type of segment
+    ("p_flags", "word"),  # Segment attributes
+    ("p_offset", "off"),  # Offset in file
+    ("p_vaddr", "addr"),  # Virtual address in memory
+    ("p_paddr", "addr"),  # Reserved
+    ("p_filesz", "xword"),  # Size of segment in file
+    ("p_memsz", "xword"),  # Size of segment in memory
+    ("p_align", "xword"),  # Alignment of segment
 ]
 
 
-def program_header(code=b''):
+def program_header(code=b""):
   prefix_size = struct_len(ELF64_EHDR) + struct_len(ELF64_PHDR)
   p_vaddr = DEFAULT_ENTRY_POINT
   p_paddr = p_vaddr
-  p_offset = 0  #  load whole ELF file. TODO: why can't I just load the code? :(
+  p_offset = 0  #  load whole ELF file. TODO: why can"t I just load the code? :(
   p_filesz = len(code)
   p_memsz = len(code)
   return serialize_struct(ELF64_PHDR, dict(
@@ -176,17 +174,33 @@ def program_header(code=b''):
 
 
 if __name__ == "__main__":
-  filename = sys.argv[1]
-  out = sys.argv[2]
-  with open(filename, "r", encoding="utf-8") as f:
+  parser = argparse.ArgumentParser(description="S-Expression to ELF64 compiler")
+  parser.add_argument("-f", "--filename", help="Input file")
+  parser.add_argument("-o", "--output", help="Output file", default="main.elf")
+  parser.add_argument(
+      "-v", "--verbose", help="Verbose logging",
+      action="store_true", default=False
+  )
+  args = parser.parse_args()
+  logging.basicConfig(
+      format="[%(asctime)s] - [%(levelname)s] - %(message)s",
+      level=logging.INFO if args.verbose else logging.ERROR
+  )
+  logging.info("Reading code from {}".format(args.filename))
+  with open(args.filename, "r", encoding="utf-8") as f:
     code = f.read()
+  logging.info("Parsing code")
+  node = Parser().parse_main(code)
+  logging.info("Compiling code")
   root = Func()
-  pl_comp_main(root, pl_parse_main(code))
-  bytecode = CodeGen().output(root)
-  print(bytecode)
-  data = b''.join([elf64_ehdr(), program_header(bytecode), bytecode])
-  if os.path.exists(out):
-    os.unlink(out)
-  fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o755)
-  with os.fdopen(fd, 'wb', closefd=True) as fp:
+  Compiler().comp_main(root, node)
+  logging.info("Generating ELF64")
+  bytecode = CodeGen().generate(root)
+  data = b"".join([elf64_ehdr(), program_header(bytecode), bytecode])
+  logging.info("Writing to {}".format(args.output))
+  if os.path.exists(args.output):
+    os.unlink(args.output)
+  fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o755)
+  with os.fdopen(fd, "wb", closefd=True) as fp:
     fp.write(data)
+  logging.info("Compilation successful!")

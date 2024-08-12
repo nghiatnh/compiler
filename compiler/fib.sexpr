@@ -1,0 +1,13 @@
+(def (fib int) ((n int))
+  (do
+    (if (le n 2)
+      (then
+        (return 1)
+      )
+      (else 
+        (return ( + (call fib (- n 1)) (call fib (- n 2))))
+      )
+    )
+  )
+)
+(return (call fib 7))

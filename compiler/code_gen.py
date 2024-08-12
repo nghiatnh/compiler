@@ -1,8 +1,10 @@
+from typing import Dict, List
 import struct
 from comp import Func
+from parser import NodeType
 
 
-class CodeGen:
+class Registers:
   # register encodings
   A = 0
   C = 1
@@ -13,41 +15,43 @@ class CodeGen:
   SI = 6
   DI = 7
 
+
+class CodeGen:
   def __init__(self):
     self.buf = bytearray()
-    self.jmps = dict()  # label -> offset list
-    self.calls = dict()  # func index -> offset list
-    self.strings = dict()  # string literal -> offset list
+    self.jmps: Dict[int, List[int]] = dict()  # label -> offset list
+    self.calls: Dict[int, List[int]] = dict()  # func index -> offset list
+    self.strings: Dict[str, List[int]] = dict()  # string literal -> offset list
     self.func2off = []  # func index -> offset
     self.fields = dict()
     self.vaddr = 0x4
 
-  def mov(self, dst, src):
+  def mov(self, dst: int, src: int):
     if src == dst:
       return
     self.load_rax(src)
     self.store_rax(dst)
 
   # mov reg, [rm + disp]
-  def asm_load(self, reg, rm, disp):
+  def asm_load(self, reg: int, rm: int, disp: int):
     self.asm_disp(b"\x48\x8b", reg, rm, disp)
 
   # mov [rm + disp], reg
-  def asm_store(self, rm, disp, reg):
+  def asm_store(self, rm: int, disp: int, reg: int):
     self.asm_disp(b"\x48\x89", reg, rm, disp)
 
-  def store_rax(self, dst):
+  def store_rax(self, dst: int):
     # mov [rbx + dst * 8], rax
-    self.asm_store(CodeGen.B, dst * 8, CodeGen.A)
+    self.asm_store(Registers.B, dst * 8, Registers.A)
 
-  def load_rax(self, src):
+  def load_rax(self, src: int):
     # mov rax, [rbx + src * 8]
-    self.asm_load(CodeGen.A, CodeGen.B, src * 8)
+    self.asm_load(Registers.A, Registers.B, src * 8)
 
   # instr reg, [rm + disp]
   # instr [rm + disp], reg
-  def asm_disp(self, lead, reg, rm, disp):
-    assert reg < 16 and rm < 16 and rm != CodeGen.SP
+  def asm_disp(self, lead: int, reg: int, rm: int, disp: int):
+    assert reg < 16 and rm < 16 and rm != Registers.SP
     lead = bytearray(lead)  # optional prefix + opcode
     if reg >= 8 or rm >= 8:
       assert (lead[0] >> 4) == 0b0100  # REX
@@ -69,16 +73,16 @@ class CodeGen:
     if mod == 2:
       self.i32(disp)
 
-  def i8(self, x):
+  def i8(self, x: int):
     self.buf.append(x if x >= 0 else (x + 256))
 
-  def i32(self, x):
+  def i32(self, x: int):
     self.buf.extend(struct.pack("<i", x))
 
-  def i64(self, x):
+  def i64(self, x: int):
     self.buf.extend(struct.pack("<q", x))
 
-  def const(self, val, dst):
+  def const(self, val: int, dst: int):
     assert isinstance(val, (int, str))
     if isinstance(val, str):
       self.buf.extend(b"\x48\x8d\x05")  # lea rax, [rip + disp32]
@@ -91,7 +95,7 @@ class CodeGen:
       self.i64(val)
     self.store_rax(dst)
 
-  def patch_addr(self, patch_off, dst_off):
+  def patch_addr(self, patch_off: int, dst_off: int):
     src_off = patch_off + 4  # rip
     relative = struct.pack("<i", dst_off - src_off)
     self.buf[patch_off:patch_off + 4] = relative
@@ -110,12 +114,12 @@ class CodeGen:
       self.buf.extend(s.encode("utf-8") + b"\0")
     self.strings.clear()
 
-  def jmp(self, L):
+  def jmp(self, L: int):
     self.buf.extend(b"\xe9")  # jmp
     self.jmps.setdefault(L, []).append(len(self.buf))
     self.buf.extend(b"\x00\x00\x00\x00")  # placeholder
 
-  def jmpf(self, a1, L):
+  def jmpf(self, a1: int, L: int):
     self.load_rax(a1)
     self.buf.extend(
         b"\x48\x85\xc0"
@@ -124,7 +128,7 @@ class CodeGen:
     self.jmps.setdefault(L, []).append(len(self.buf))
     self.buf.extend(b"\x00\x00\x00\x00")  # placeholder
 
-  def asm_call(self, L):
+  def asm_call(self, L: int):
     self.buf.extend(b"\xe8")  # call
     self.calls.setdefault(L, []).append(len(self.buf))
     self.buf.extend(b"\x00\x00\x00\x00")  # placeholder
@@ -132,17 +136,17 @@ class CodeGen:
   def func(self, func: Func):
     self.func2off.append(len(self.buf))
     pos2off = []
-    for instr_name, *instr_args in func.code:
+    for code in func.code:
       pos2off.append(len(self.buf))
-      method = getattr(self.__class__, instr_name)
-      method(self, *instr_args)
+      method = getattr(self.__class__, code.op.name.lower())
+      method(self, *code.args)
     for L, offsets in self.jmps.items():
       dst_off = pos2off[func.labels[L]]
       for patch_off in offsets:
         self.patch_addr(patch_off, dst_off)
     self.jmps.clear()
 
-  def call(self, func, arg_start, level_cur, level_new):
+  def call(self, func: Func, arg_start: int, level_cur: int, level_new: int):
     assert 1 <= level_cur
     assert 1 <= level_new <= level_cur + 1
     if level_new > level_cur:
@@ -160,60 +164,60 @@ class CodeGen:
     self.buf.extend(b"\x48\x81\xc4")  # add rsp, (level_new - 1) * 8
     self.i32((level_new - 1) * 8)
 
-  def ret(self, a1):
+  def ret(self, a1: int):
     if a1 > 0:
       self.load_rax(a1)
       self.store_rax(0)
     self.buf.append(0xc3)  # ret
 
-  def load_env_addr(self, level_var):
+  def load_env_addr(self, level_var: int):
     self.buf.extend(b"\x48\x8b\x84\x24")  # mov rax, [rsp + level_var * 8]
     self.i32(level_var * 8)
 
-  def get_env(self, level_var, var, dst):
+  def get_env(self, level_var: int, var: int, dst: int):
     self.load_env_addr(level_var)
     # mov rax, [rax + var * 8]
-    self.asm_load(CodeGen.A, CodeGen.A, var * 8)
+    self.asm_load(Registers.A, Registers.A, var * 8)
     # mov [rbx + dst * 8], rax
     self.store_rax(dst)
 
-  def set_env(self, level_var, var, src):
+  def set_env(self, level_var: int, var: int, src: int):
     self.load_env_addr(level_var)
     # mov rdx, [rbx + src * 8]
-    self.asm_load(CodeGen.D, CodeGen.B, src * 8)
+    self.asm_load(Registers.D, Registers.B, src * 8)
     # mov [rax + var * 8], rdx
-    self.asm_store(CodeGen.A, var * 8, CodeGen.D)
+    self.asm_store(Registers.A, var * 8, Registers.D)
 
-  def binop(self, op, a1, a2, dst):
+  def binop(self, op: NodeType, a1: int, a2: int, dst: int):
     self.load_rax(a1)
     arith = {
-        "+": b"\x48\x03",  # add reg, rm
-        "-": b"\x48\x2b",  # sub reg, rm
-        "*": b"\x48\x0f\xaf",  # imul reg, rm
+        NodeType.ADD: b"\x48\x03",  # add reg, rm
+        NodeType.SUB: b"\x48\x2b",  # sub reg, rm
+        NodeType.MUL: b"\x48\x0f\xaf",  # imul reg, rm
     }
     if op in arith:
       # op rax, [rbx + a2 * 8]
-      self.asm_disp(arith[op], CodeGen.A, CodeGen.B, a2 * 8)
-    if op in {"/", "%"}:
+      self.asm_disp(arith[op], Registers.A, Registers.B, a2 * 8)
+    if op in {NodeType.DIV, NodeType.MOD}:
       # xor edx, edx
       self.buf.extend(b"\x31\xd2")
       # idiv rax, [rbx + a2 * 8]
       self.buf.extend(b"\x48\xf7\xbb")
       self.i32(a2 * 8)
-      if op == "%":
+      if op == NodeType.MOD:
         # mov rax, rdx
         self.buf.extend(b"\x48\x89\xd0")
     cmp = {
-        "eq": b"\x0f\x94\xc0",  # sete al
-        "ne": b"\x0f\x95\xc0",  # setne al
-        "ge": b"\x0f\x9d\xc0",  # setge al
-        "gt": b"\x0f\x9f\xc0",  # setg al
-        "le": b"\x0f\x9e\xc0",  # setle al
-        "lt": b"\x0f\x9c\xc0",  # setl al
+        NodeType.EQ: b"\x0f\x94\xc0",  # sete al
+        NodeType.NE: b"\x0f\x95\xc0",  # setne al
+        NodeType.GE: b"\x0f\x9d\xc0",  # setge al
+        NodeType.GT: b"\x0f\x9f\xc0",  # setg al
+        NodeType.LE: b"\x0f\x9e\xc0",  # setle al
+        NodeType.LT: b"\x0f\x9c\xc0",  # setl al
     }
     if op in cmp:
       # cmp rax, [rbx + a2 * 8]
-      self.asm_disp(b"\x48\x3b", CodeGen.A, CodeGen.B, a2 * 8)
+      self.asm_disp(b"\x48\x3b", Registers.A, Registers.B, a2 * 8)
       # setcc al
       self.buf.extend(cmp[op])
       # movzx eax, al
@@ -221,12 +225,12 @@ class CodeGen:
     self.store_rax(dst)
 
   # compile the program to an ELF executable
-  def output(self, root: Func):
+  def generate(self, root: Func) -> bytes:
     self.code_entry()
     for func in root.funcs:
       self.func(func)
     self.code_end()
-    return self.buf
+    return bytes(self.buf)
 
   def padding(self):
     while len(self.buf) % 16:
@@ -258,24 +262,3 @@ class CodeGen:
         b"\x48\x8b\x3b"  # mov rdi, [rbx]
         b"\x0f\x05"  # syscall
     )
-
-  def padding(self):
-    while len(self.buf) % 16:
-      self.buf.append(0)
-
-  def f16(self, name):
-    self.fields[name] = (2, len(self.buf))
-    self.buf.extend(b'\x00\x00')
-
-  def f32(self, name):
-    self.fields[name] = (4, len(self.buf))
-    self.buf.extend(b'\x00\x00\x00\x00')
-
-  def f64(self, name):
-    self.fields[name] = (8, len(self.buf))
-    self.buf.extend(b'\x00\x00\x00\x00\x00\x00\x00\x00')
-
-  def setf(self, name, value):
-    size, offset = self.fields[name]
-    fmt = {2: '<H', 4: '<I', 8: '<Q'}[size]
-    self.buf[offset:offset+size] = struct.pack(fmt, value)
