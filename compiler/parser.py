@@ -51,26 +51,26 @@ class Parser:
   def _unary(self) -> ASTNode:
     # (+ | -) factor
     token = self._cur_token
-    if token.type == TokenType.PLUS:
-      self._eat(TokenType.PLUS)
-      return ASTNode(ASTNodeType.UNARY_OP, token, [self._factor()])
-    elif token.type == TokenType.MINUS:
-      self._eat(TokenType.MINUS)
+    if token.type in [TokenType.PLUS, TokenType.MINUS, TokenType.NOT]:
+      self._eat(token.type)
       return ASTNode(ASTNodeType.UNARY_OP, token, [self._factor()])
     else:
       return self._factor()
 
   def _factor(self) -> ASTNode:
-    # (+ | -) unary | INTEGER | ( expr )
+    # unary | INTEGER | ( expr )
     token = self._cur_token
-    if token.type in (TokenType.PLUS, TokenType.MINUS):
+    if token.type in (TokenType.PLUS, TokenType.MINUS, TokenType.NOT):
       return self._unary()
     if token.type == TokenType.INTEGER:
       self._eat(TokenType.INTEGER)
       return ASTNode(ASTNodeType.VALUE, token)
+    elif token.type == TokenType.ID:
+      self._eat(TokenType.ID)
+      return ASTNode(ASTNodeType.ID, token)
     elif token.type == TokenType.LEFT_PAREN:
       self._eat(TokenType.LEFT_PAREN)
-      node = self._expr()
+      node = self._logic()
       self._eat(TokenType.RIGHT_PAREN)
       return node
     else:
@@ -79,7 +79,8 @@ class Parser:
   def _term(self) -> ASTNode:
     # factor ((* | / | div | mod) factor)*
     node = self._factor()
-    while self._cur_token.type in (TokenType.STAR, TokenType.SLASH):
+    while self._cur_token.type in (
+            TokenType.STAR, TokenType.SLASH, TokenType.AND, TokenType.OR):
       operator = self._cur_token
       self._eat(operator.type)
       node = ASTNode(ASTNodeType.BINARY_OP, operator, [node, self._factor()])
@@ -94,12 +95,24 @@ class Parser:
       node = ASTNode(ASTNodeType.BINARY_OP, operator, [node, self._term()])
     return node
 
+  def _logic(self) -> ASTNode:
+    # expr (logic expr)*
+    node = self._expr()
+    while self._cur_token.type in (
+        TokenType.EQ, TokenType.NEQ, TokenType.LE,
+        TokenType.LT, TokenType.GE, TokenType.GT,
+    ):
+      operator = self._cur_token
+      self._eat(operator.type)
+      node = ASTNode(ASTNodeType.BINARY_OP, operator, [node, self._expr()])
+    return node
+
   def _assign(self) -> ASTNode:
-    # ID := expr
+    # ID := logic
     token = self._cur_token
     self._eat(TokenType.ID)
     self._eat(TokenType.ASSIGN)
-    return ASTNode(ASTNodeType.ASSIGN, token, [self._expr()])
+    return ASTNode(ASTNodeType.ASSIGN, token, [self._logic()])
 
   def _body(self) -> ASTNode:
     # BEGIN statement_list END
@@ -126,6 +139,10 @@ class Parser:
       return self._body()
     elif self._cur_token.type == TokenType.ID:
       return self._assign()
+    elif self._cur_token.type == TokenType.IF:
+      return self._control_flow()
+    elif self._cur_token.type == TokenType.WHILE:
+      return self._loop()
     else:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
 
@@ -165,15 +182,33 @@ class Parser:
         [self._declarations(), self._body()]
     )
 
-  def control_flow(self) -> ASTNode:
-    # IF expr THEN statement (ELSE statement)?
+  def _control_flow(self) -> ASTNode:
+    # IF logic THEN (body | statement) (ELSE (body | statement))?
     token = self._cur_token
     self._eat(TokenType.IF)
-    node = ASTNode(token, [self._expr()])
+    node = ASTNode(ASTNodeType.CONTROL_FLOW, token, [self._logic()])
     self._eat(TokenType.THEN)
-    node.children.append(self._statement())
+    if self._cur_token.type == TokenType.BEGIN:
+      node.children.append(self._body())
+    else:
+      node.children.append(self._statement())
     if self._cur_token.type == TokenType.ELSE:
       self._eat(TokenType.ELSE)
+      if self._cur_token.type == TokenType.BEGIN:
+        node.children.append(self._body())
+      else:
+        node.children.append(self._statement())
+    return node
+  
+  def _loop(self) -> ASTNode:
+    # while logic do (body | statement)
+    token = self._cur_token
+    self._eat(TokenType.WHILE)
+    node = ASTNode(ASTNodeType.LOOP, token, [self._logic()])
+    self._eat(TokenType.DO)
+    if self._cur_token.type == TokenType.BEGIN:
+      node.children.append(self._body())
+    else:
       node.children.append(self._statement())
     return node
 

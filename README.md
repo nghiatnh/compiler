@@ -29,7 +29,7 @@
 - **factor**: `+` *factor* | `-` *factor* | `(` *expr* `)` | **VALUE** | *variable*
 
 ### Control flow
-- **control_flow**: `if` *expr* `then` (*body* | *statement*) | `if` *expr* `then` (*body* | *statement*) `else` (*body* | *statement*)
+- **control_flow**: `if` *expr* `then` (*body* | *statement*) (`else` (*body* | *statement*))?
 
 ### Loop
 - **loop**: `while` *expr* `do` (*body* | *statement*)
