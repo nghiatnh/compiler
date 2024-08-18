@@ -1,6 +1,10 @@
 from enum import Enum
 
 
+# ============================================================================#
+# Enumerations                                                                #
+# ============================================================================#
+
 class TokenType(Enum):
   UNINIT = 0
   # Single-character tokens
@@ -19,6 +23,7 @@ class TokenType(Enum):
   STAR = 22
   SLASH = 23
   INTEGER_DIV = 24
+  INTEGER_MOD = 25
 
   # Comparison operators
   EQ = 30
@@ -51,6 +56,16 @@ class TokenType(Enum):
   EOF = 200
 
 
+class ErrorType(Enum):
+  UNEXPECTED_TOKEN = 1
+  UNMATCHED_COMMENT = 2
+  UNCLOSED_COMMENT = 3
+
+
+# ============================================================================#
+# Constants                                                                   #
+# ============================================================================#
+
 PUNCTUATIONS = {
     "(": TokenType.LEFT_PAREN,
     ")": TokenType.RIGHT_PAREN,
@@ -67,14 +82,13 @@ OPERATORS1CHAR = {
     "-": TokenType.MINUS,
     "*": TokenType.STAR,
     "/": TokenType.SLASH,
+    "=": TokenType.EQ,
     "<": TokenType.LT,
     ">": TokenType.GT,
 }
 
 OPERATORS2CHAR = {
-    "//": TokenType.INTEGER_DIV,
-    "==": TokenType.EQ,
-    "!=": TokenType.NEQ,
+    "<>": TokenType.NEQ,
     "<=": TokenType.LE,
     ">=": TokenType.GE,
     ":=": TokenType.ASSIGN,
@@ -92,9 +106,6 @@ KEYWORDS = {
     "AND": TokenType.AND,
     "OR": TokenType.OR,
     "NOT": TokenType.NOT,
+    "DIV": TokenType.INTEGER_DIV,
+    "MOD": TokenType.INTEGER_MOD,
 }
-
-
-class ErrorType(Enum):
-  UNEXPECTED_TOKEN = 1
-  UNMATCHED_COMMENT = 2
