@@ -1,0 +1,100 @@
+from enum import Enum
+
+
+class TokenType(Enum):
+  UNINIT = 0
+  # Single-character tokens
+  LEFT_PAREN = 1
+  RIGHT_PAREN = 2
+  LEFT_BRACE = 3
+  RIGHT_BRACE = 4
+  COMMA = 5
+  SEMICOLON = 6
+  COLON = 7
+  DOT = 8
+
+  # Binary operators
+  PLUS = 20
+  MINUS = 21
+  STAR = 22
+  SLASH = 23
+  INTEGER_DIV = 24
+
+  # Comparison operators
+  EQ = 30
+  NEQ = 31
+  LT = 32
+  LE = 33
+  GT = 34
+  GE = 35
+
+  # Logical operators
+  AND = 36
+  OR = 37
+  NOT = 38
+
+  # Keywords
+  VAR = 100
+  BEGIN = 101
+  END = 102
+  IF = 103
+  THEN = 104
+  ELSE = 105
+  WHILE = 106
+  DO = 107
+
+  # OTHERS
+  ASSIGN = 120
+  ID = 121
+  INTEGER = 122
+
+  EOF = 200
+
+
+PUNCTUATIONS = {
+    "(": TokenType.LEFT_PAREN,
+    ")": TokenType.RIGHT_PAREN,
+    "{": TokenType.LEFT_BRACE,
+    "}": TokenType.RIGHT_BRACE,
+    ",": TokenType.COMMA,
+    ";": TokenType.SEMICOLON,
+    ":": TokenType.COLON,
+    ".": TokenType.DOT,
+}
+
+OPERATORS1CHAR = {
+    "+": TokenType.PLUS,
+    "-": TokenType.MINUS,
+    "*": TokenType.STAR,
+    "/": TokenType.SLASH,
+    "<": TokenType.LT,
+    ">": TokenType.GT,
+}
+
+OPERATORS2CHAR = {
+    "//": TokenType.INTEGER_DIV,
+    "==": TokenType.EQ,
+    "!=": TokenType.NEQ,
+    "<=": TokenType.LE,
+    ">=": TokenType.GE,
+    ":=": TokenType.ASSIGN,
+}
+
+KEYWORDS = {
+    "VAR": TokenType.VAR,
+    "BEGIN": TokenType.BEGIN,
+    "END": TokenType.END,
+    "IF": TokenType.IF,
+    "THEN": TokenType.THEN,
+    "ELSE": TokenType.ELSE,
+    "WHILE": TokenType.WHILE,
+    "DO": TokenType.DO,
+    "AND": TokenType.AND,
+    "OR": TokenType.OR,
+    "NOT": TokenType.NOT,
+}
+
+
+class ErrorType(Enum):
+  UNEXPECTED_TOKEN = 1
+  UNMATCHED_COMMENT = 2
