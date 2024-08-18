@@ -2,6 +2,7 @@ from typing import List
 import graphviz
 
 from compiler.token import Token
+from compiler.constants import ASTNodeType
 
 
 class ASTNode:
@@ -13,12 +14,21 @@ class ASTNode:
   and the children represent the node's children.
   """
 
-  def __init__(self, token: Token, children: List["ASTNode"] = None):
+  def __init__(
+      self,
+      type: ASTNodeType,
+      token: Token,
+      children: List["ASTNode"] = None,
+  ):
+    self._type = type
     self._token = token
     self._children = children or []
 
   def _add_node(self, dot: graphviz.Digraph):
-    dot.node(str(id(self)), f"{self.token.type.name}: {self.token.value}")
+    if self.token and self.token.value:
+      dot.node(str(id(self)), f"{self.type.name}: {self.token.value}")
+    else:
+       dot.node(str(id(self)), f"{self.type.name}")
     for child in self.children:
       child._add_node(dot)
       dot.edge(str(id(self)), str(id(child)))
@@ -36,8 +46,8 @@ class ASTNode:
     return self._children
 
   @property
-  def type(self):
-    return self._token.type
+  def type(self) -> ASTNodeType:
+    return self._type
 
   # ========================================================================= #
   # Public methods                                                            #

@@ -57,6 +57,23 @@ class TokenType(Enum):
   EOF = 200
 
 
+class ASTNodeType(Enum):
+  EMPTY = 0
+  PROGRAM = 1
+  VAR = 2
+  ASSIGN = 3
+  CONTROL_FLOW = 4
+  LOOP = 5
+  BLOCK = 6
+  BINARY_OP = 7
+  UNARY_OP = 8
+  STATEMENTS = 9
+  STATEMENT = 10
+  ID = 11
+  VALUE = 12
+  DECLARATION = 13
+
+
 class ErrorType(Enum):
   UNEXPECTED_TOKEN = 1
   UNMATCHED_COMMENT = 2

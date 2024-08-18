@@ -3,6 +3,7 @@ from compiler.token import Token
 from compiler.lexer import Lexer
 from compiler.ast_node import ASTNode
 from compiler.constants import TokenType
+from compiler.constants import ASTNodeType
 from compiler.constants import ErrorType
 
 
@@ -38,20 +39,24 @@ class Parser:
     )
 
   def _eat(self, token_type: TokenType):
-    if self.cur_token.type == token_type:
+    if self._cur_token.type == token_type:
       self._cur_token = self._lexer.next_token()
     else:
-      self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
+      self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
+
+  # ========================================================================= #
+  # Parser methods                                                            #
+  # ========================================================================= #
 
   def _unary(self) -> ASTNode:
     # (+ | -) factor
     token = self._cur_token
     if token.type == TokenType.PLUS:
       self._eat(TokenType.PLUS)
-      return ASTNode(token, [self._factor()])
+      return ASTNode(ASTNodeType.UNARY_OP, token, [self._factor()])
     elif token.type == TokenType.MINUS:
       self._eat(TokenType.MINUS)
-      return ASTNode(token, [self._factor()])
+      return ASTNode(ASTNodeType.UNARY_OP, token, [self._factor()])
     else:
       return self._factor()
 
@@ -62,7 +67,7 @@ class Parser:
       return self._unary()
     if token.type == TokenType.INTEGER:
       self._eat(TokenType.INTEGER)
-      return ASTNode(token)
+      return ASTNode(ASTNodeType.VALUE, token)
     elif token.type == TokenType.LEFT_PAREN:
       self._eat(TokenType.LEFT_PAREN)
       node = self._expr()
@@ -77,7 +82,7 @@ class Parser:
     while self._cur_token.type in (TokenType.STAR, TokenType.SLASH):
       operator = self._cur_token
       self._eat(operator.type)
-      node = ASTNode(operator, [node, self._factor()])
+      node = ASTNode(ASTNodeType.BINARY_OP, operator, [node, self._factor()])
     return node
 
   def _expr(self) -> ASTNode:
@@ -86,7 +91,7 @@ class Parser:
     while self._cur_token.type in (TokenType.PLUS, TokenType.MINUS):
       operator = self._cur_token
       self._eat(operator.type)
-      node = ASTNode(operator, [node, self._term()])
+      node = ASTNode(ASTNodeType.BINARY_OP, operator, [node, self._term()])
     return node
 
   def _assign(self) -> ASTNode:
@@ -94,15 +99,15 @@ class Parser:
     token = self._cur_token
     self._eat(TokenType.ID)
     self._eat(TokenType.ASSIGN)
-    return ASTNode(token, [self._expr()])
+    return ASTNode(ASTNodeType.ASSIGN, token, [self._expr()])
 
   def _body(self) -> ASTNode:
     # BEGIN statement_list END
-    token = self.cur_token
+    token = self._cur_token
     self._eat(TokenType.BEGIN)
     nodes = self._statements()
     self._eat(TokenType.END)
-    return ASTNode(token, nodes)
+    return ASTNode(ASTNodeType.STATEMENTS, token, nodes)
 
   def _statements(self) -> List[ASTNode]:
     # (statement ;)* statement | EMPTY
@@ -126,45 +131,59 @@ class Parser:
 
   def _declaration(self) -> ASTNode:
     # ID : (INTEGER | REAL)
-    if self.cur_token.type == TokenType.ID:
-      node = ASTNode(self.cur_token)
+    if self._cur_token.type == TokenType.ID:
+      node = ASTNode(ASTNodeType.DECLARATION, self._cur_token)
       self._eat(TokenType.ID)
-      while self.cur_token.type == TokenType.COMMA:
+      while self._cur_token.type == TokenType.COMMA:
         self._eat(TokenType.COMMA)
-        node.children.append(ASTNode(self.cur_token))
+        node.children.append(ASTNode(ASTNodeType.ID, self._cur_token))
         self._eat(TokenType.ID)
       self._eat(TokenType.COLON)
-      node.children.append(ASTNode(self.cur_token))
+      node.children.append(ASTNode(ASTNodeType.ID, self._cur_token))
       self._eat(TokenType.ID)
       return node
     else:
-      self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
-
+      self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
 
   def _declarations(self) -> ASTNode:
     # var (declaration ;)+ | EMPTY
-    token = self.cur_token
-    if self.cur_token.type == TokenType.VAR:
+    token = self._cur_token
+    if self._cur_token.type == TokenType.VAR:
       self._eat(TokenType.VAR)
       nodes = [self._declaration()]
       self._eat(TokenType.SEMICOLON)
-      while self.cur_token.type == TokenType.ID:
+      while self._cur_token.type == TokenType.ID:
         nodes.append(self._declaration())
         self._eat(TokenType.SEMICOLON)
-      return ASTNode(token, nodes)
-    return ASTNode(token, [])
-  
+      return ASTNode(ASTNodeType.VAR, token, nodes)
+    return ASTNode(ASTNodeType.VAR, token, [])
+
   def _block(self) -> ASTNode:
     # declarations body
-    return ASTNode(self.cur_token, [self._declarations(), self._body()])
-  
+    return ASTNode(
+        ASTNodeType.BLOCK, self._cur_token,
+        [self._declarations(), self._body()]
+    )
+
+  def control_flow(self) -> ASTNode:
+    # IF expr THEN statement (ELSE statement)?
+    token = self._cur_token
+    self._eat(TokenType.IF)
+    node = ASTNode(token, [self._expr()])
+    self._eat(TokenType.THEN)
+    node.children.append(self._statement())
+    if self._cur_token.type == TokenType.ELSE:
+      self._eat(TokenType.ELSE)
+      node.children.append(self._statement())
+    return node
+
   def _program(self) -> ASTNode:
     # PROGRAM ID ; block .
-    token = self.cur_token
+    token = self._cur_token
     self._eat(TokenType.PROGRAM)
     self._eat(TokenType.ID)
     self._eat(TokenType.SEMICOLON)
-    node = ASTNode(token, [self._block()])
+    node = ASTNode(ASTNodeType.PROGRAM, token, [self._block()])
     self._eat(TokenType.DOT)
     return node
 
