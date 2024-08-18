@@ -1,12 +1,12 @@
 from enum import Enum
 
 
-# ============================================================================#
+# =========================================================================== #
 # Enumerations                                                                #
-# ============================================================================#
+# =========================================================================== #
 
 class TokenType(Enum):
-  UNINIT = 0
+  EMPTY = 0
   # Single-character tokens
   LEFT_PAREN = 1
   RIGHT_PAREN = 2
@@ -47,6 +47,7 @@ class TokenType(Enum):
   ELSE = 105
   WHILE = 106
   DO = 107
+  PROGRAM = 108
 
   # OTHERS
   ASSIGN = 120
@@ -62,9 +63,9 @@ class ErrorType(Enum):
   UNCLOSED_COMMENT = 3
 
 
-# ============================================================================#
+# =========================================================================== #
 # Constants                                                                   #
-# ============================================================================#
+# =========================================================================== #
 
 PUNCTUATIONS = {
     "(": TokenType.LEFT_PAREN,
@@ -103,6 +104,7 @@ KEYWORDS = {
     "ELSE": TokenType.ELSE,
     "WHILE": TokenType.WHILE,
     "DO": TokenType.DO,
+    "PROGRAM": TokenType.PROGRAM,
     "AND": TokenType.AND,
     "OR": TokenType.OR,
     "NOT": TokenType.NOT,
