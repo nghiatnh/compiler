@@ -132,14 +132,14 @@ class Parser:
   def _declaration(self) -> ASTNode:
     # ID : (INTEGER | REAL)
     if self._cur_token.type == TokenType.ID:
-      node = ASTNode(ASTNodeType.DECLARATION, self._cur_token)
+      nodes = [ASTNode(ASTNodeType.ID, self._cur_token)]
       self._eat(TokenType.ID)
       while self._cur_token.type == TokenType.COMMA:
         self._eat(TokenType.COMMA)
-        node.children.append(ASTNode(ASTNodeType.ID, self._cur_token))
+        nodes.append(ASTNode(ASTNodeType.ID, self._cur_token))
         self._eat(TokenType.ID)
       self._eat(TokenType.COLON)
-      node.children.append(ASTNode(ASTNodeType.ID, self._cur_token))
+      node = ASTNode(ASTNodeType.DECLARATION, self._cur_token, nodes)
       self._eat(TokenType.ID)
       return node
     else:
