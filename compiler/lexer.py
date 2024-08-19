@@ -138,7 +138,7 @@ class Lexer:
 
       if self._cur_char.isdigit():
         return Token(
-            self._line, self._column, TokenType.INTEGER, self._integer())
+            self._line, self._column, TokenType.VALUE, self._integer())
 
       self._error(ErrorType.UNEXPECTED_TOKEN)
 

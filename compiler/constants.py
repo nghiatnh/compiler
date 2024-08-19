@@ -50,11 +50,15 @@ class TokenType(Enum):
   PROGRAM = 108
   PROCEDURE = 109
   FUNCTION = 110
+  INTEGER = 111
+  REAL = 112
+  BOOLEAN = 113
+  STRING = 114
 
   # OTHERS
   ASSIGN = 120
   ID = 121
-  INTEGER = 122
+  VALUE = 122
 
   EOF = 200
 
@@ -78,12 +82,14 @@ class ASTNodeType(Enum):
   FUNCTION = 15
   PARAMS = 16
   CALL = 17
+  TYPE = 18
 
 
 class ErrorType(Enum):
   UNEXPECTED_TOKEN = 1
   UNMATCHED_COMMENT = 2
   UNCLOSED_COMMENT = 3
+  EXPECT_TOKEN = 4
 
 
 # =========================================================================== #
@@ -135,4 +141,8 @@ KEYWORDS = {
     "MOD": TokenType.INTEGER_MOD,
     "PROCEDURE": TokenType.PROCEDURE,
     "FUNCTION": TokenType.FUNCTION,
+    "INTEGER": TokenType.INTEGER,
+    "REAL": TokenType.REAL,
+    "BOOLEAN": TokenType.BOOLEAN,
+    "STRING": TokenType.STRING,
 }

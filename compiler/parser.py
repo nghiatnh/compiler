@@ -32,17 +32,18 @@ class Parser:
   def cur_token(self) -> Token:
     return self._cur_token
 
-  def _error(self, error_type: ErrorType, token: Token):
+  def _error(self, error_type: ErrorType, token: Token, message: str = ""):
     raise ParserError(
         f"Parser error code {error_type.value}: {error_type.name} at line"
-        f" {token.line}, column {token.column}"
+        f" {token.line}, column {token.column}, {message}"
     )
 
   def _eat(self, token_type: TokenType):
     if self._cur_token.type == token_type:
       self._cur_token = self._lexer.next_token()
     else:
-      self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
+      self._error(
+          ErrorType.EXPECT_TOKEN, self._cur_token, f"Expect {token_type.name}")
 
   # ========================================================================= #
   # Parser methods                                                            #
@@ -62,8 +63,8 @@ class Parser:
     token = self._cur_token
     if token.type in (TokenType.PLUS, TokenType.MINUS, TokenType.NOT):
       return self._unary()
-    if token.type == TokenType.INTEGER:
-      self._eat(TokenType.INTEGER)
+    if token.type == TokenType.VALUE:
+      self._eat(TokenType.VALUE)
       return ASTNode(ASTNodeType.VALUE, token)
     elif token.type == TokenType.ID:
       if self._lexer.cur_char == "(":
@@ -150,6 +151,17 @@ class Parser:
     else:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
 
+  def _eat_type(self) -> Token:
+    # (INTEGER | REAL | BOOLEAN | STRING)
+    token = self._cur_token
+    if token.type in (
+        TokenType.INTEGER, TokenType.REAL,
+        TokenType.BOOLEAN, TokenType.STRING
+    ):
+      self._eat(token.type)
+      return token
+    self._error(ErrorType.UNEXPECTED_TOKEN, token)
+
   def _declaration(self) -> ASTNode:
     # ID (, ID)* : (INTEGER | REAL)
     if self._cur_token.type == TokenType.ID:
@@ -160,8 +172,7 @@ class Parser:
         nodes.append(ASTNode(ASTNodeType.ID, self._cur_token))
         self._eat(TokenType.ID)
       self._eat(TokenType.COLON)
-      node = ASTNode(ASTNodeType.DECLARATION, self._cur_token, nodes)
-      self._eat(TokenType.ID)
+      node = ASTNode(ASTNodeType.DECLARATION, self._eat_type(), nodes)
       return node
     else:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
@@ -263,9 +274,7 @@ class Parser:
       node.children.append(ASTNode(ASTNodeType.PARAMS, self._cur_token, []))
     self._eat(TokenType.RIGHT_PAREN)
     self._eat(TokenType.COLON)
-    return_type = self._cur_token
-    self._eat(TokenType.ID)
-    node.children.append(ASTNode(ASTNodeType.ID, return_type))
+    node.children.append(ASTNode(ASTNodeType.TYPE, self._eat_type()))
     self._eat(TokenType.SEMICOLON)
     node.children.append(self._block())
     self._eat(TokenType.SEMICOLON)
