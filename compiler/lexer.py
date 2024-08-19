@@ -131,9 +131,9 @@ class Lexer:
             self._line, self._column, OPERATORS1CHAR[_cur_char], _cur_char)
 
       if _cur_char.isalpha():
-        _id = self._identifier().upper()
-        if _id in KEYWORDS:
-          return Token(self._line, self._column, KEYWORDS[_id])
+        _id = self._identifier()
+        if _id.upper() in KEYWORDS:
+          return Token(self._line, self._column, KEYWORDS[_id.upper()], _id)
         return Token(self._line, self._column, TokenType.ID, _id)
 
       if self._cur_char.isdigit():

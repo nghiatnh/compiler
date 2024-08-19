@@ -18,6 +18,7 @@
 - **proc_decl**: `procedure` *func_name* `(` *params* `)` `;` *block* `;`
 - **params**: *declaration* (`;` *declaration*)* | **EMPTY**
 - **func_name**: **ID**
+- **call**: **ID**`(` (*expr* (`,` *expr*))? `)`
 
 ### Statements
 - **statements**: (*statement* `;`)* *statement* | **EMPTY**
