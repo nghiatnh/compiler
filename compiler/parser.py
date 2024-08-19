@@ -147,7 +147,7 @@ class Parser:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
 
   def _declaration(self) -> ASTNode:
-    # ID : (INTEGER | REAL)
+    # ID (, ID)* : (INTEGER | REAL)
     if self._cur_token.type == TokenType.ID:
       nodes = [ASTNode(ASTNodeType.ID, self._cur_token)]
       self._eat(TokenType.ID)
@@ -176,11 +176,16 @@ class Parser:
     return ASTNode(ASTNodeType.VAR, token, [])
 
   def _block(self) -> ASTNode:
-    # declarations body
-    return ASTNode(
-        ASTNodeType.BLOCK, self._cur_token,
-        [self._declarations(), self._body()]
-    )
+    # declarations proc_decl* func_decl* body
+    node = ASTNode(ASTNodeType.BLOCK, self._cur_token, [])
+    node.children.append(self._declarations())
+    while self._cur_token.type in [TokenType.PROCEDURE, TokenType.FUNCTION]:
+      if self._cur_token.type == TokenType.PROCEDURE:
+        node.children.append(self._proc_decl())
+      else:
+        node.children.append(self._func_decl())
+    node.children.append(self._body())
+    return node
 
   def _control_flow(self) -> ASTNode:
     # IF logic THEN (body | statement) (ELSE (body | statement))?
@@ -211,6 +216,56 @@ class Parser:
     else:
       node.children.append(self._statement())
     return node
+  
+  def _params(self) -> ASTNode:
+    # declaration (; declaration)*)
+    nodes = []
+    if self._cur_token.type == TokenType.ID:
+      nodes.append(self._declaration())
+      while self._cur_token.type == TokenType.SEMICOLON:
+        self._eat(TokenType.SEMICOLON)
+        nodes.append(self._declaration())
+    else:
+      self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
+    return ASTNode(ASTNodeType.PARAMS, self._cur_token, nodes)
+  
+  def _proc_decl(self) -> ASTNode:
+    # PROCEDURE ID ( params ) ; block ;
+    self._eat(TokenType.PROCEDURE)
+    proc_name = self._cur_token
+    self._eat(TokenType.ID)
+    self._eat(TokenType.LEFT_PAREN)
+    node = ASTNode(ASTNodeType.PROCEDURE, proc_name, [])
+    if self.cur_token.type != TokenType.RIGHT_PAREN:
+      node.children.append(self._params())
+    else:
+      node.children.append(ASTNode(ASTNodeType.PARAMS, self._cur_token, []))
+    self._eat(TokenType.RIGHT_PAREN)
+    self._eat(TokenType.SEMICOLON)
+    node.children.append(self._block())
+    self._eat(TokenType.SEMICOLON)
+    return node
+
+  def _func_decl(self) -> ASTNode:
+    # FUNCTION ID ( params ) : (INTEGER | REAL) ; block ;
+    self._eat(TokenType.FUNCTION)
+    func_name = self._cur_token
+    self._eat(TokenType.ID)
+    self._eat(TokenType.LEFT_PAREN)
+    node = ASTNode(ASTNodeType.FUNCTION, func_name, [])
+    if self.cur_token.type != TokenType.RIGHT_PAREN:
+      node.children.append(self._params())
+    else:
+      node.children.append(ASTNode(ASTNodeType.PARAMS, self._cur_token, []))
+    self._eat(TokenType.RIGHT_PAREN)
+    self._eat(TokenType.COLON)
+    return_type = self._cur_token
+    self._eat(TokenType.ID)
+    node.children.append(ASTNode(ASTNodeType.ID, return_type))
+    self._eat(TokenType.SEMICOLON)
+    node.children.append(self._block())
+    self._eat(TokenType.SEMICOLON)
+    return node
 
   def _program(self) -> ASTNode:
     # PROGRAM ID ; block .
@@ -227,6 +282,9 @@ class Parser:
   # ========================================================================= #
 
   def parse(self) -> ASTNode:
+    """
+    Parse the input program and return the abstract syntax tree (AST).
+    """
     self._cur_token = self._lexer.next_token()
     node = self._program()
     if self._cur_token.type != TokenType.EOF:

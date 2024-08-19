@@ -48,6 +48,8 @@ class TokenType(Enum):
   WHILE = 106
   DO = 107
   PROGRAM = 108
+  PROCEDURE = 109
+  FUNCTION = 110
 
   # OTHERS
   ASSIGN = 120
@@ -72,6 +74,9 @@ class ASTNodeType(Enum):
   ID = 11
   VALUE = 12
   DECLARATION = 13
+  PROCEDURE = 14
+  FUNCTION = 15
+  PARAMS = 16
 
 
 class ErrorType(Enum):
@@ -127,4 +132,6 @@ KEYWORDS = {
     "NOT": TokenType.NOT,
     "DIV": TokenType.INTEGER_DIV,
     "MOD": TokenType.INTEGER_MOD,
+    "PROCEDURE": TokenType.PROCEDURE,
+    "FUNCTION": TokenType.FUNCTION,
 }

@@ -60,7 +60,7 @@ class Lexer:
       self._move_next()
 
   def _skip_comment(self):
-    while self._cur_char is not None and self._cur_char != TokenType.RIGHT_BRACE.value:
+    while self._cur_char is not None and self._cur_char != "}":
       self._move_next()
     if self._cur_char is None:
       self._error(ErrorType.UNCLOSED_COMMENT)
@@ -95,14 +95,14 @@ class Lexer:
         self._skip_whitespace()
         continue
 
-      if self._cur_char == TokenType.LEFT_BRACE.value:
+      if self._cur_char == "{":
         self._move_next()
         self._skip_comment()
         continue
 
       _cur_char = self._cur_char
 
-      if _cur_char == TokenType.RIGHT_BRACE.value:
+      if _cur_char == "}":
         self._error(ErrorType.UNMATCHED_COMMENT)
 
       # Must check 2 chars before punctuations to avoid ambiguity
@@ -124,10 +124,10 @@ class Lexer:
             self._line, self._column, OPERATORS1CHAR[_cur_char], _cur_char)
 
       if _cur_char.isalpha():
-        _cur_char = self._identifier()
-        if _cur_char in KEYWORDS:
-          return Token(self._line, self._column, KEYWORDS[_cur_char])
-        return Token(self._line, self._column, TokenType.ID, _cur_char)
+        _id = self._identifier().upper()
+        if _id in KEYWORDS:
+          return Token(self._line, self._column, KEYWORDS[_id])
+        return Token(self._line, self._column, TokenType.ID, _id)
 
       if self._cur_char.isdigit():
         return Token(
