@@ -86,6 +86,13 @@ class Lexer:
   # ========================================================================= #
   # Public methods                                                            #
   # ========================================================================= #
+  @property
+  def cur_char(self) -> str:
+    """
+    Get the current character from the source code.
+    """
+    return self._cur_char
+
   def next_token(self) -> Token:
     """
     Get the next token from the source code.

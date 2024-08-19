@@ -66,6 +66,8 @@ class Parser:
       self._eat(TokenType.INTEGER)
       return ASTNode(ASTNodeType.VALUE, token)
     elif token.type == TokenType.ID:
+      if self._lexer.cur_char == "(":
+        return self._call()
       self._eat(TokenType.ID)
       return ASTNode(ASTNodeType.ID, token)
     elif token.type == TokenType.LEFT_PAREN:
@@ -134,10 +136,12 @@ class Parser:
     return nodes
 
   def _statement(self) -> ASTNode:
-    # body | assign | control_flow | loop
+    # body | assign | control_flow | loop | call
     if self._cur_token.type == TokenType.BEGIN:
       return self._body()
     elif self._cur_token.type == TokenType.ID:
+      if self._lexer.cur_char == "(":
+        return self._call()
       return self._assign()
     elif self._cur_token.type == TokenType.IF:
       return self._control_flow()
@@ -204,7 +208,7 @@ class Parser:
       else:
         node.children.append(self._statement())
     return node
-  
+
   def _loop(self) -> ASTNode:
     # while logic do (body | statement)
     token = self._cur_token
@@ -216,7 +220,7 @@ class Parser:
     else:
       node.children.append(self._statement())
     return node
-  
+
   def _params(self) -> ASTNode:
     # declaration (; declaration)*)
     nodes = []
@@ -228,7 +232,7 @@ class Parser:
     else:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
     return ASTNode(ASTNodeType.PARAMS, self._cur_token, nodes)
-  
+
   def _proc_decl(self) -> ASTNode:
     # PROCEDURE ID ( params ) ; block ;
     self._eat(TokenType.PROCEDURE)
@@ -265,6 +269,20 @@ class Parser:
     self._eat(TokenType.SEMICOLON)
     node.children.append(self._block())
     self._eat(TokenType.SEMICOLON)
+    return node
+
+  def _call(self) -> ASTNode:
+    # ID ( (logic (, logic)*) | EMPTY )
+    name = self._cur_token
+    self._eat(TokenType.ID)
+    self._eat(TokenType.LEFT_PAREN)
+    node = ASTNode(ASTNodeType.CALL, name, [])
+    if self._cur_token.type != TokenType.RIGHT_PAREN:
+      node.children.append(self._logic())
+      while self._cur_token.type == TokenType.COMMA:
+        self._eat(TokenType.COMMA)
+        node.children.append(self._logic())
+    self._eat(TokenType.RIGHT_PAREN)
     return node
 
   def _program(self) -> ASTNode:

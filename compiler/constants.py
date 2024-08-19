@@ -77,6 +77,7 @@ class ASTNodeType(Enum):
   PROCEDURE = 14
   FUNCTION = 15
   PARAMS = 16
+  CALL = 17
 
 
 class ErrorType(Enum):
