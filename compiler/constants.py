@@ -48,12 +48,12 @@ class TokenType(Enum):
   WHILE = 106
   DO = 107
   PROGRAM = 108
-  PROCEDURE = 109
   FUNCTION = 110
   INTEGER = 111
   REAL = 112
   BOOLEAN = 113
   STRING = 114
+  VOID = 115
 
   # OTHERS
   ASSIGN = 120
@@ -78,8 +78,7 @@ class ASTNodeType(Enum):
   ID = 11
   VALUE = 12
   DECLARATION = 13
-  PROCEDURE = 14
-  FUNCTION = 15
+  FUNC_DECL = 15
   PARAMS = 16
   CALL = 17
   TYPE = 18
@@ -90,6 +89,14 @@ class ErrorType(Enum):
   UNMATCHED_COMMENT = 2
   UNCLOSED_COMMENT = 3
   EXPECT_TOKEN = 4
+
+
+class VariableType(Enum):
+  INTEGER = "INTEGER"
+  REAL = "REAL"
+  BOOLEAN = "BOOLEAN"
+  STRING = "STRING"
+  VOID = "VOID"
 
 
 # =========================================================================== #
@@ -139,10 +146,10 @@ KEYWORDS = {
     "NOT": TokenType.NOT,
     "DIV": TokenType.INTEGER_DIV,
     "MOD": TokenType.INTEGER_MOD,
-    "PROCEDURE": TokenType.PROCEDURE,
     "FUNCTION": TokenType.FUNCTION,
     "INTEGER": TokenType.INTEGER,
     "REAL": TokenType.REAL,
     "BOOLEAN": TokenType.BOOLEAN,
     "STRING": TokenType.STRING,
+    "VOID": TokenType.VOID,
 }

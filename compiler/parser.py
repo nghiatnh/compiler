@@ -151,13 +151,16 @@ class Parser:
     else:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
 
-  def _eat_type(self) -> Token:
-    # (INTEGER | REAL | BOOLEAN | STRING)
+  def _eat_type(self, include_void: bool = False) -> Token:
+    # (INTEGER | REAL | BOOLEAN | STRING | VOID?)
     token = self._cur_token
     if token.type in (
         TokenType.INTEGER, TokenType.REAL,
         TokenType.BOOLEAN, TokenType.STRING
     ):
+      self._eat(token.type)
+      return token
+    elif include_void and token.type == TokenType.VOID:
       self._eat(token.type)
       return token
     self._error(ErrorType.UNEXPECTED_TOKEN, token)
@@ -191,14 +194,11 @@ class Parser:
     return ASTNode(ASTNodeType.VAR, token, [])
 
   def _block(self) -> ASTNode:
-    # declarations proc_decl* func_decl* body
+    # declarations func_decl* body
     node = ASTNode(ASTNodeType.BLOCK, self._cur_token, [])
     node.children.append(self._declarations())
-    while self._cur_token.type in [TokenType.PROCEDURE, TokenType.FUNCTION]:
-      if self._cur_token.type == TokenType.PROCEDURE:
-        node.children.append(self._proc_decl())
-      else:
-        node.children.append(self._func_decl())
+    while self._cur_token.type == TokenType.FUNCTION:
+      node.children.append(self._func_decl())
     node.children.append(self._body())
     return node
 
@@ -244,37 +244,21 @@ class Parser:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
     return ASTNode(ASTNodeType.PARAMS, self._cur_token, nodes)
 
-  def _proc_decl(self) -> ASTNode:
-    # PROCEDURE ID ( params ) ; block ;
-    self._eat(TokenType.PROCEDURE)
-    proc_name = self._cur_token
-    self._eat(TokenType.ID)
-    self._eat(TokenType.LEFT_PAREN)
-    node = ASTNode(ASTNodeType.PROCEDURE, proc_name, [])
-    if self.cur_token.type != TokenType.RIGHT_PAREN:
-      node.children.append(self._params())
-    else:
-      node.children.append(ASTNode(ASTNodeType.PARAMS, self._cur_token, []))
-    self._eat(TokenType.RIGHT_PAREN)
-    self._eat(TokenType.SEMICOLON)
-    node.children.append(self._block())
-    self._eat(TokenType.SEMICOLON)
-    return node
-
   def _func_decl(self) -> ASTNode:
-    # FUNCTION ID ( params ) : (INTEGER | REAL) ; block ;
+    # FUNCTION ID ( params ) : (INTEGER | REAL | VOID) ; block ;
     self._eat(TokenType.FUNCTION)
     func_name = self._cur_token
     self._eat(TokenType.ID)
     self._eat(TokenType.LEFT_PAREN)
-    node = ASTNode(ASTNodeType.FUNCTION, func_name, [])
+    node = ASTNode(ASTNodeType.FUNC_DECL, func_name, [])
     if self.cur_token.type != TokenType.RIGHT_PAREN:
       node.children.append(self._params())
     else:
       node.children.append(ASTNode(ASTNodeType.PARAMS, self._cur_token, []))
     self._eat(TokenType.RIGHT_PAREN)
     self._eat(TokenType.COLON)
-    node.children.append(ASTNode(ASTNodeType.TYPE, self._eat_type()))
+    node.children.append(
+        ASTNode(ASTNodeType.TYPE, self._eat_type(include_void=True)))
     self._eat(TokenType.SEMICOLON)
     node.children.append(self._block())
     self._eat(TokenType.SEMICOLON)

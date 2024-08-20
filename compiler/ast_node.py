@@ -70,9 +70,6 @@ class ASTNodeVisitor:
   visiting the nodes in the abstract syntax tree.
   """
 
-  def __init__(self, root: ASTNode) -> None:
-    self._root = root
-
   def _generic_visit(self, node: ASTNode) -> None:
     """
     Generic visit method. This method will be called if a specific visit method
@@ -91,6 +88,6 @@ class ASTNodeVisitor:
     Visit the given node. This method will call the appropriate visit method
     based on the node's type.
     """
-    method_name = f"visit_{node.type.name.lower()}"
+    method_name = f"_visit_{node.type.name.lower()}"
     visit_fn = getattr(cls, method_name, cls._generic_visit)
     return visit_fn(node)
