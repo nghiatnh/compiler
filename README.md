@@ -2,7 +2,7 @@
 
 ### Program
 - **program**: `program` *prog_name* `;` *block* `.`
-- **block**: *declarations* (*proc_decl* | *func_decl*)* *body*
+- **block**: *declarations* *func_decl** *body*
 - **body**: `BEGIN` *statements* `END`
 - **prog_name**: **ID**
 
@@ -13,9 +13,8 @@
 - **assign**: *variable* `:=` *expr*
 - **variable**: **ID**
 
-### Functions/Procedures
-- **func_decl**: `function` *func_name* `(` *params* `)` `:` *type* `;` *block* `;`
-- **proc_decl**: `procedure` *func_name* `(` *params* `)` `;` *block* `;`
+### Functions
+- **func_decl**: `function` *func_name* `(` *params* `)` `:` (*type* | **VOID**) `;` *block* `;`
 - **params**: *declaration* (`;` *declaration*)* | **EMPTY**
 - **func_name**: **ID**
 - **call**: **ID**`(` (*expr* (`,` *expr*))? `)`
