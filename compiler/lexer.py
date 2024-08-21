@@ -25,15 +25,19 @@ class Lexer:
   token. It skips whitespaces and comments.
   """
 
-  def __init__(self, text: str):
+  def __init__(self, text: str, * , case_sentitive: bool = False):
     self._text = text
     self._pos = 0
     self._line = 1
     self._column = 1
+    self._case_sensitive = case_sentitive
 
   @property
   def _cur_char(self) -> str:
-    return self._text[self._pos] if not self._is_eof else None
+    if self._is_eof:
+      return None
+    cur_char = self._text[self._pos]
+    return cur_char if self._case_sensitive else cur_char.upper()
 
   @property
   def _is_eof(self) -> bool:
@@ -132,8 +136,8 @@ class Lexer:
 
       if _cur_char.isalpha():
         _id = self._identifier()
-        if _id.upper() in KEYWORDS:
-          return Token(self._line, self._column, KEYWORDS[_id.upper()], _id)
+        if _id in KEYWORDS:
+          return Token(self._line, self._column, KEYWORDS[_id], _id)
         return Token(self._line, self._column, TokenType.ID, _id)
 
       if self._cur_char.isdigit():
