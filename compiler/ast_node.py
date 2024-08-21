@@ -3,6 +3,7 @@ import graphviz
 
 from compiler.token import Token
 from compiler.constants import ASTNodeType
+from compiler.constants import VariableType
 
 
 class ASTNode:
@@ -83,7 +84,7 @@ class ASTNodeVisitor:
   # Public methods                                                            #
   # ========================================================================= #
 
-  def visit(cls, node: ASTNode) -> Any:
+  def visit(cls, node: ASTNode) -> VariableType:
     """
     Visit the given node. This method will call the appropriate visit method
     based on the node's type.

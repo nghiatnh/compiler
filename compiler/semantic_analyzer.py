@@ -30,26 +30,63 @@ class SemanticAnalyzer(ASTNodeVisitor):
     raise SemanticError(
         f"{message}, line {node.token.line}, column {node.token.column}")
 
-  def _generic_visit(self, node: ASTNode):
+  def _generic_visit(self, node: ASTNode) -> ASTNode:
     if node.type in ASTNodeType:
       for child in node.children:
         self.visit(child)
+      return VariableType.VOID
     else:
       super()._generic_visit(node)
 
-  def _visit_program(self, node: ASTNode):
+  def _visit_program(self, node: ASTNode) -> VariableType:
     global_scope = SymbolTable("global", 1)
     self._current_scope = global_scope
     self._generic_visit(node)
     self._current_scope = self._current_scope.parent
+    return VariableType.VOID
 
-  def _visit_id(self, node: ASTNode):
+  def _visit_binary_op(self, node: ASTNode) -> VariableType:
+    left_type = self.visit(node.children[0])
+    right_type = self.visit(node.children[1])
+    if left_type != right_type:
+      self._error(f"Type mismatch {left_type.name} and {right_type.name}", node)
+    if left_type == VariableType.VOID:
+      self._error("Invalid type VOID", node)
+    return left_type
+  
+  def _visit_unary_op(self, node: ASTNode) -> VariableType:
+    return self.visit(node.children[0])
+  
+  def _visit_statements(self, node: ASTNode) -> VariableType:
+    for child in node.children:
+      self.visit(child)
+      if child.type == ASTNodeType.RETURN:
+        return VariableType(self.visit(child.children[0]))
+    return VariableType.VOID
+
+  def _visit_id(self, node: ASTNode) -> VariableType:
     var_name = node.token.value
-    if self._current_scope.lookup(var_name) is None:
+    var_symbol = self._current_scope.lookup(var_name)
+    if var_symbol is None:
       self._error(f"Variable undefined '{var_name}'", node)
+    if not isinstance(var_symbol, VarSymbol):
+      self._error(f"'{var_name}' is not a variable", node)
+    return var_symbol.var_type
 
-  def _visit_assign(self, node: ASTNode):
-    return self._visit_id(node)
+  def _visit_value(self, node: ASTNode) -> VariableType:
+    if isinstance(node.token.value, int):
+      return VariableType.INTEGER
+    else:
+      raise NotImplementedError("Invalid type")
+
+  def _visit_assign(self, node: ASTNode) -> VariableType:
+    left_type = self._visit_id(node)
+    right_type = self.visit(node.children[0])
+    if right_type != left_type:
+      self._error(f"Type mismatch {left_type.name} and {right_type.name}", node)
+    if left_type == VariableType.VOID:
+      self._error("Invalid type VOID", node)
+    return VariableType.VOID
 
   def _visit_declaration(self, node: ASTNode):
     for child in node.children:
@@ -58,6 +95,7 @@ class SemanticAnalyzer(ASTNodeVisitor):
       if self._current_scope.lookup(var_name, current_scope_only=True):
         self._error(f"Variable '{var_name}' already declared", child)
       self._current_scope.add(var_symbol)
+    return VariableType.VOID
 
   def _visit_func_decl(self, node: ASTNode):
     func_name = node.token.value
@@ -72,7 +110,7 @@ class SemanticAnalyzer(ASTNodeVisitor):
     params, return_type, block = node.children
     func_symbol = FuncSymbol(
         func_name,
-        VariableType(return_type.token.value),
+        VariableType(return_type.token.value.upper()),
         block_node=block,
         param_types=[],
     )
@@ -83,6 +121,10 @@ class SemanticAnalyzer(ASTNodeVisitor):
     self.visit(block)
     self._current_scope = self._current_scope.parent
     self._current_scope.add(func_symbol)
+    return VariableType.VOID
+  
+  def _visit_type(self, node: ASTNode) -> VariableType:
+    return VariableType(node.token.value.upper())
 
   def _visit_call(self, node: ASTNode):
     func_name = node.token.value
@@ -98,6 +140,7 @@ class SemanticAnalyzer(ASTNodeVisitor):
           node,
       )
     self._generic_visit(node)
+    return func_symbol.return_type
 
   # ========================================================================= #
   # Public methods                                                            #

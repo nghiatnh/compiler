@@ -48,6 +48,7 @@ class TokenType(Enum):
   WHILE = 106
   DO = 107
   PROGRAM = 108
+  RETURN = 109
   FUNCTION = 110
   INTEGER = 111
   REAL = 112
@@ -82,6 +83,7 @@ class ASTNodeType(Enum):
   PARAMS = 16
   CALL = 17
   TYPE = 18
+  RETURN = 19
 
 
 class ErrorType(Enum):
@@ -152,4 +154,5 @@ KEYWORDS = {
     "BOOLEAN": TokenType.BOOLEAN,
     "STRING": TokenType.STRING,
     "VOID": TokenType.VOID,
+    "RETURN": TokenType.RETURN,
 }

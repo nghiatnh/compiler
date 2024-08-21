@@ -148,6 +148,8 @@ class Parser:
       return self._control_flow()
     elif self._cur_token.type == TokenType.WHILE:
       return self._loop()
+    elif self._cur_token.type == TokenType.RETURN:
+      return self._return()
     else:
       self._error(ErrorType.UNEXPECTED_TOKEN, self._cur_token)
 
@@ -262,6 +264,20 @@ class Parser:
     self._eat(TokenType.SEMICOLON)
     node.children.append(self._block())
     self._eat(TokenType.SEMICOLON)
+    return node
+
+  def _return(self) -> ASTNode:
+    # RETURN logic?
+    node = ASTNode(ASTNodeType.RETURN, self._cur_token, [])
+    self._eat(TokenType.RETURN)
+    if self._cur_token.type not in [TokenType.SEMICOLON, TokenType.END]:
+      node.children.append(self._logic())
+    else:
+      # For the semantic analyzer can understand the return type
+      node.children.append(ASTNode(ASTNodeType.TYPE, Token(
+          self._cur_token.line, self._cur_token.column,
+          TokenType.VOID, "VOID",
+      )))
     return node
 
   def _call(self) -> ASTNode:
