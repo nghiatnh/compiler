@@ -2,6 +2,7 @@ from compiler.ast_node import ASTNode, ASTNodeVisitor
 from compiler.symbol_table import SymbolTable, VarSymbol, FuncSymbol
 from compiler.constants import ASTNodeType
 from compiler.constants import VariableType
+from compiler.constants import TokenType
 
 
 class SemanticError(Exception):
@@ -12,6 +13,25 @@ class SemanticError(Exception):
   that occur during semantic analysis. It is a subclass of the built-in
   Exception class.
   """
+
+
+class Function:
+  """
+  Function
+  ========
+  """
+
+  def __init__(self, func: FuncSymbol, parent: "Function" = None) -> None:
+    self._func = func
+    self._parent = parent
+
+  @property
+  def func(self) -> FuncSymbol:
+    return self._func
+
+  @property
+  def parent(self) -> "Function":
+    return self._parent
 
 
 class SemanticAnalyzer(ASTNodeVisitor):
@@ -25,6 +45,7 @@ class SemanticAnalyzer(ASTNodeVisitor):
 
   def __init__(self) -> None:
     self._current_scope = None
+    self._current_func = None
 
   def _error(self, message: str, node: ASTNode):
     raise SemanticError(
@@ -52,16 +73,39 @@ class SemanticAnalyzer(ASTNodeVisitor):
       self._error(f"Type mismatch {left_type.name} and {right_type.name}", node)
     if left_type == VariableType.VOID:
       self._error("Invalid type VOID", node)
+    if node.token.type in (TokenType.AND, TokenType.OR):
+      if left_type != VariableType.BOOLEAN:
+        self._error(f"Invalid type {left_type.name}", node)
+      return VariableType.BOOLEAN
+    if node.token.type in (
+        TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.LE,
+        TokenType.GT, TokenType.GE
+    ):
+      return VariableType.BOOLEAN
     return left_type
-  
+
   def _visit_unary_op(self, node: ASTNode) -> VariableType:
-    return self.visit(node.children[0])
-  
+    return_type = self.visit(node.children[0])
+    if node.token.type == TokenType.NOT:
+      if return_type != VariableType.BOOLEAN:
+        self._error(f"Invalid type {return_type.name}", node)
+      return VariableType.BOOLEAN
+    if return_type == VariableType.VOID:
+      self._error("Invalid type VOID", node)
+    return return_type
+
+  def _visit_block(self, node: ASTNode) -> VariableType:
+    var_decl, *func_decls, statements = node.children
+    self.visit(var_decl)
+    for func_decl in func_decls:
+      self.visit(func_decl)
+    return self._visit_statements(statements)
+
   def _visit_statements(self, node: ASTNode) -> VariableType:
     for child in node.children:
-      self.visit(child)
       if child.type == ASTNodeType.RETURN:
-        return VariableType(self.visit(child.children[0]))
+        return self.visit(child)
+      self.visit(child)
     return VariableType.VOID
 
   def _visit_id(self, node: ASTNode) -> VariableType:
@@ -114,15 +158,31 @@ class SemanticAnalyzer(ASTNodeVisitor):
         block_node=block,
         param_types=[],
     )
+    self._current_func = Function(func_symbol, self._current_func)
     for param in params.children:
       self._visit_declaration(param)
       func_symbol.param_types.extend(
           [VariableType(param.token.type.name)] * len(param.children))
-    self.visit(block)
+    return_type = self.visit(block)
+    if func_symbol.return_type != return_type:
+      self._error(
+          f"Return type mismatch {self._current_func.func.return_type.name} and "
+          f"{return_type.name}", node,)
     self._current_scope = self._current_scope.parent
+    self._current_func = self._current_func.parent
     self._current_scope.add(func_symbol)
     return VariableType.VOID
-  
+
+  def _visit_return(self, node: ASTNode):
+    if self._current_func is None:
+      self._error("Return statement outside function", node)
+    return_type = self.visit(node.children[0])
+    if self._current_func.func.return_type != return_type:
+      self._error(
+          f"Return type mismatch {self._current_func.func.return_type.name} and "
+          f"{return_type.name}", node,)
+    return return_type
+
   def _visit_type(self, node: ASTNode) -> VariableType:
     return VariableType(node.token.value.upper())
 
@@ -141,6 +201,22 @@ class SemanticAnalyzer(ASTNodeVisitor):
       )
     self._generic_visit(node)
     return func_symbol.return_type
+
+  def _visit_control_flow(self, node: ASTNode):
+    condition_type = self.visit(node.children[0])
+    if condition_type != VariableType.BOOLEAN:
+      self._error(f"Invalid condition type {condition_type.name}", node)
+    for child in node.children[1:]:
+      self.visit(child)
+    return VariableType.VOID
+
+  def _visit_loop(self, node: ASTNode):
+    condition_type = self.visit(node.children[0])
+    if condition_type != VariableType.BOOLEAN:
+      self._error(f"Invalid condition type {condition_type.name}", node)
+    for child in node.children[1:]:
+      self.visit(child)
+    return VariableType.VOID
 
   # ========================================================================= #
   # Public methods                                                            #
