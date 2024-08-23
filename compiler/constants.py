@@ -6,62 +6,67 @@ from enum import Enum
 # =========================================================================== #
 
 class TokenType(Enum):
-  EMPTY = 0
+  EMPTY = ""
   # Single-character tokens
-  LEFT_PAREN = 1
-  RIGHT_PAREN = 2
-  LEFT_BRACE = 3
-  RIGHT_BRACE = 4
-  COMMA = 5
-  SEMICOLON = 6
-  COLON = 7
-  DOT = 8
+  LEFT_PAREN = "("
+  RIGHT_PAREN = ")"
+  LEFT_BRACE = "{"
+  RIGHT_BRACE = "}"
+  COMMA = ","
+  SEMICOLON = ";"
+  COLON = ":"
+  DOT = "."
+  SINGLE_QUOTE = "'"
 
   # Binary operators
-  PLUS = 20
-  MINUS = 21
-  STAR = 22
-  SLASH = 23
-  INTEGER_DIV = 24
-  INTEGER_MOD = 25
+  PLUS = "+"
+  MINUS = "-"
+  STAR = "*"
+  SLASH = "/"
+  INTEGER_DIV = "DIV"
+  INTEGER_MOD = "MOD"
 
   # Comparison operators
-  EQ = 30
-  NEQ = 31
-  LT = 32
-  LE = 33
-  GT = 34
-  GE = 35
+  EQ = "="
+  NEQ = "<>"
+  LT = "<"
+  LE = "<="
+  GT = ">"
+  GE = ">="
 
   # Logical operators
-  AND = 36
-  OR = 37
-  NOT = 38
+  AND = "AND"
+  OR = "OR"
+  NOT = "NOT"
 
   # Keywords
-  VAR = 100
-  BEGIN = 101
-  END = 102
-  IF = 103
-  THEN = 104
-  ELSE = 105
-  WHILE = 106
-  DO = 107
-  PROGRAM = 108
-  RETURN = 109
-  FUNCTION = 110
-  INTEGER = 111
-  REAL = 112
-  BOOLEAN = 113
-  STRING = 114
-  VOID = 115
+  VAR = "VAR"
+  BEGIN = "BEGIN"
+  END = "END"
+  IF = "IF"
+  THEN = "THEN"
+  ELSE = "ELSE"
+  WHILE = "WHILE"
+  DO = "DO"
+  PROGRAM = "PROGRAM"
+  RETURN = "RETURN"
+  FUNCTION = "FUNCTION"
+  INTEGER = "INTEGER"
+  REAL = "REAL"
+  BOOLEAN = "BOOLEAN"
+  STRING = "STRING"
+  VOID = "VOID"
+  BREAK = "BREAK"
+  CONTINUE = "CONTINUE"
+  TRUE = "TRUE"
+  FALSE = "FALSE"
 
   # OTHERS
-  ASSIGN = 120
-  ID = 121
-  VALUE = 122
+  ASSIGN = ":="
+  ID = "ID"
+  VALUE = "VALUE"
 
-  EOF = 200
+  EOF = "EOF"
 
 
 class ASTNodeType(Enum):
@@ -84,6 +89,8 @@ class ASTNodeType(Enum):
   CALL = 17
   TYPE = 18
   RETURN = 19
+  BREAK = 20
+  CONTINUE = 21
 
 
 class ErrorType(Enum):
@@ -91,6 +98,7 @@ class ErrorType(Enum):
   UNMATCHED_COMMENT = 2
   UNCLOSED_COMMENT = 3
   EXPECT_TOKEN = 4
+  UNCLOSED_STRING = 5
 
 
 class VariableType(Enum):
@@ -106,53 +114,56 @@ class VariableType(Enum):
 # =========================================================================== #
 
 PUNCTUATIONS = {
-    "(": TokenType.LEFT_PAREN,
-    ")": TokenType.RIGHT_PAREN,
-    "{": TokenType.LEFT_BRACE,
-    "}": TokenType.RIGHT_BRACE,
-    ",": TokenType.COMMA,
-    ";": TokenType.SEMICOLON,
-    ":": TokenType.COLON,
-    ".": TokenType.DOT,
+    TokenType.LEFT_PAREN.value: TokenType.LEFT_PAREN,
+    TokenType.RIGHT_PAREN.value: TokenType.RIGHT_PAREN,
+    TokenType.LEFT_BRACE.value: TokenType.LEFT_BRACE,
+    TokenType.RIGHT_BRACE.value: TokenType.RIGHT_BRACE,
+    TokenType.COMMA.value: TokenType.COMMA,
+    TokenType.SEMICOLON.value: TokenType.SEMICOLON,
+    TokenType.COLON.value: TokenType.COLON,
+    TokenType.DOT.value: TokenType.DOT,
+    TokenType.SINGLE_QUOTE.value: TokenType.SINGLE_QUOTE,
 }
 
 OPERATORS1CHAR = {
-    "+": TokenType.PLUS,
-    "-": TokenType.MINUS,
-    "*": TokenType.STAR,
-    "/": TokenType.SLASH,
-    "=": TokenType.EQ,
-    "<": TokenType.LT,
-    ">": TokenType.GT,
+    TokenType.PLUS.value: TokenType.PLUS,
+    TokenType.MINUS.value: TokenType.MINUS,
+    TokenType.STAR.value: TokenType.STAR,
+    TokenType.SLASH.value: TokenType.SLASH,
+    TokenType.EQ.value: TokenType.EQ,
+    TokenType.LT.value: TokenType.LT,
+    TokenType.GT.value: TokenType.GT,
 }
 
 OPERATORS2CHAR = {
-    "<>": TokenType.NEQ,
-    "<=": TokenType.LE,
-    ">=": TokenType.GE,
-    ":=": TokenType.ASSIGN,
+    TokenType.NEQ.value: TokenType.NEQ,
+    TokenType.LE.value: TokenType.LE,
+    TokenType.GE.value: TokenType.GE,
+    TokenType.ASSIGN.value: TokenType.ASSIGN,
 }
 
 KEYWORDS = {
-    "VAR": TokenType.VAR,
-    "BEGIN": TokenType.BEGIN,
-    "END": TokenType.END,
-    "IF": TokenType.IF,
-    "THEN": TokenType.THEN,
-    "ELSE": TokenType.ELSE,
-    "WHILE": TokenType.WHILE,
-    "DO": TokenType.DO,
-    "PROGRAM": TokenType.PROGRAM,
-    "AND": TokenType.AND,
-    "OR": TokenType.OR,
-    "NOT": TokenType.NOT,
-    "DIV": TokenType.INTEGER_DIV,
-    "MOD": TokenType.INTEGER_MOD,
-    "FUNCTION": TokenType.FUNCTION,
-    "INTEGER": TokenType.INTEGER,
-    "REAL": TokenType.REAL,
-    "BOOLEAN": TokenType.BOOLEAN,
-    "STRING": TokenType.STRING,
-    "VOID": TokenType.VOID,
-    "RETURN": TokenType.RETURN,
+    TokenType.VAR.value: TokenType.VAR,
+    TokenType.BEGIN.value: TokenType.BEGIN,
+    TokenType.END.value: TokenType.END,
+    TokenType.IF.value: TokenType.IF,
+    TokenType.THEN.value: TokenType.THEN,
+    TokenType.ELSE.value: TokenType.ELSE,
+    TokenType.WHILE.value: TokenType.WHILE,
+    TokenType.DO.value: TokenType.DO,
+    TokenType.PROGRAM.value: TokenType.PROGRAM,
+    TokenType.AND.value: TokenType.AND,
+    TokenType.OR.value: TokenType.OR,
+    TokenType.NOT.value: TokenType.NOT,
+    TokenType.INTEGER_DIV.value: TokenType.INTEGER_DIV,
+    TokenType.INTEGER_MOD.value: TokenType.INTEGER_MOD,
+    TokenType.FUNCTION.value: TokenType.FUNCTION,
+    TokenType.INTEGER.value: TokenType.INTEGER,
+    TokenType.REAL.value: TokenType.REAL,
+    TokenType.BOOLEAN.value: TokenType.BOOLEAN,
+    TokenType.STRING.value: TokenType.STRING,
+    TokenType.VOID.value: TokenType.VOID,
+    TokenType.RETURN.value: TokenType.RETURN,
+    TokenType.BREAK.value: TokenType.BREAK,
+    TokenType.CONTINUE.value: TokenType.CONTINUE,
 }

@@ -33,13 +33,6 @@ class Lexer:
     self._case_sensitive = case_sentitive
 
   @property
-  def _cur_char(self) -> str:
-    if self._is_eof:
-      return None
-    cur_char = self._text[self._pos]
-    return cur_char if self._case_sensitive else cur_char.upper()
-
-  @property
   def _is_eof(self) -> bool:
     return self._pos >= len(self._text)
 
@@ -51,7 +44,7 @@ class Lexer:
 
   def _move_next(self):
     if not self._is_eof:
-      if self._cur_char == "\n":
+      if self.cur_char == "\n":
         self._line += 1
         self._column = 1
         self._pos += 1
@@ -60,27 +53,37 @@ class Lexer:
         self._column += 1
 
   def _skip_whitespace(self):
-    while self._cur_char is not None and self._cur_char.isspace():
+    while self.cur_char is not None and self.cur_char.isspace():
       self._move_next()
 
   def _skip_comment(self):
-    while self._cur_char is not None and self._cur_char != "}":
+    while self.cur_char is not None and self.cur_char != TokenType.RIGHT_BRACE.value:
       self._move_next()
-    if self._cur_char is None:
+    if self.cur_char is None:
       self._error(ErrorType.UNCLOSED_COMMENT)
     self._move_next()
 
   def _integer(self) -> int:
     cur = ""
-    while not self._is_eof and self._cur_char.isdigit():
-      cur += self._cur_char
+    while not self._is_eof and self.cur_char.isdigit():
+      cur += self.cur_char
       self._move_next()
     return int(cur)
+  
+  def _string(self) -> str:
+    cur = ""
+    while not self._is_eof and self.cur_char != TokenType.SINGLE_QUOTE.value:
+      cur += self.cur_char
+      self._move_next()
+    if self.cur_char is None:
+      self._error(ErrorType.UNCLOSED_STRING)
+    self._move_next()
+    return cur
 
   def _identifier(self) -> str:
     cur = ""
-    while self._cur_char is not None and self._cur_char.isalnum():
-      cur += self._cur_char
+    while self.cur_char is not None and self.cur_char.isalnum():
+      cur += self.cur_char
       self._move_next()
     return cur
 
@@ -95,54 +98,58 @@ class Lexer:
     """
     Get the current character from the source code.
     """
-    return self._cur_char
+    if self._is_eof:
+      return None
+    cur_char = self._text[self._pos]
+    return cur_char if self._case_sensitive else cur_char.upper()
 
   def next_token(self) -> Token:
     """
     Get the next token from the source code.
     """
-    while self._cur_char is not None:
-      if self._cur_char.isspace():
+    while self.cur_char is not None:
+      if self.cur_char.isspace():
         self._skip_whitespace()
         continue
 
-      if self._cur_char == "{":
+      if self.cur_char == TokenType.LEFT_BRACE.value:
         self._move_next()
         self._skip_comment()
         continue
 
-      _cur_char = self._cur_char
+      cur_char = self.cur_char
+      line, column = self._line, self._column
 
-      if _cur_char == "}":
+      if cur_char == TokenType.RIGHT_BRACE.value:
         self._error(ErrorType.UNMATCHED_COMMENT)
 
+      if cur_char == TokenType.SINGLE_QUOTE.value:
+        self._move_next()
+        return Token(line, column, TokenType.VALUE, self._string())
+
+      if self.cur_char.isdigit():
+        return Token(line, column, TokenType.VALUE, self._integer())
+
       # Must check 2 chars before punctuations to avoid ambiguity
-      if self._seek() is not None and _cur_char + self._seek() in OPERATORS2CHAR:
-        _cur_char += self._seek()
+      if self._seek() is not None and cur_char + self._seek() in OPERATORS2CHAR:
+        cur_char += self._seek()
         self._move_next()
         self._move_next()
-        return Token(
-            self._line, self._column, OPERATORS2CHAR[_cur_char], _cur_char)
+        return Token(line, column, OPERATORS2CHAR[cur_char], cur_char)
 
-      if _cur_char in PUNCTUATIONS:
+      if cur_char in PUNCTUATIONS:
         self._move_next()
-        return Token(
-            self._line, self._column, PUNCTUATIONS[_cur_char], _cur_char)
+        return Token(line, column, PUNCTUATIONS[cur_char], cur_char)
 
-      if _cur_char in OPERATORS1CHAR:
+      if cur_char in OPERATORS1CHAR:
         self._move_next()
-        return Token(
-            self._line, self._column, OPERATORS1CHAR[_cur_char], _cur_char)
+        return Token(line, column, OPERATORS1CHAR[cur_char], cur_char)
 
-      if _cur_char.isalpha():
+      if cur_char.isalpha():
         _id = self._identifier()
         if _id in KEYWORDS:
-          return Token(self._line, self._column, KEYWORDS[_id], _id)
-        return Token(self._line, self._column, TokenType.ID, _id)
-
-      if self._cur_char.isdigit():
-        return Token(
-            self._line, self._column, TokenType.VALUE, self._integer())
+          return Token(line, column, KEYWORDS[_id], _id)
+        return Token(line, column, TokenType.ID, _id)
 
       self._error(ErrorType.UNEXPECTED_TOKEN)
 
