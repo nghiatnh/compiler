@@ -1,34 +1,47 @@
-# Grammar
+# Grammar (Pascal-like)
+
+### Comment
+- **comment**: `{` *any* `}`
 
 ### Program
-- **program**: `program` *prog_name* `;` *block* `.`
-- **block**: *declarations* *func_decl** *body*
-- **body**: `BEGIN` *statements* `END`
+- **program**: `PROGRAM` *prog_name* `;` *block* `.`
+- **block**: *var_decl*? *func_decl** *body*
+- **body**: `BEGIN` *statements*? `END`
 - **prog_name**: **ID**
 
 ### Variables
-- **declarations**: `var` (*declaration* `;`)+ | **EMPTY**
-- **declaration**: *variable* (`,` *variable*)* `:` *type*
-- **type**: `INTEGER` | `REAL`
-- **assign**: *variable* `:=` *expr*
+- **var_decl**: `VAR` (*declaration* `;`)+
+- **declaration**: *variable* (`,` *variable*)* `:` *var_type*
+- **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING`
+- **assign**: *variable* `:=` *logic*
 - **variable**: **ID**
 
 ### Functions
-- **func_decl**: `function` *func_name* `(` *params* `)` `:` (*type* | **VOID**) `;` *block* `;`
-- **params**: *declaration* (`;` *declaration*)* | **EMPTY**
+- **func_decl**: `FUNCTION` *func_name* `(` *params*? `)` `:` *func_type* `;` *block* `;`
+- **params**: *declaration* (`;` *declaration*)*
+- **func_type**: *var_type* | `VOID`
+- **call**: *func_name* `(` *args*? `)`
+- **args**: *logic* (`,` *logic*)*
+- **return**: `RETURN` *logic*?
 - **func_name**: **ID**
-- **call**: **ID**`(` (*expr* (`,` *expr*))? `)`
 
 ### Statements
-- **statements**: (*statement* `;`)* *statement* | **EMPTY**
-- **statement**: *body* | *assign* | *control_flow* | *loop*
-
+- **statements**: (*statement* `;`)* *statement*
+- **statement**: *body* | *assign* | *control_flow* | *loop* | *jump*
+- **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
 - **expr**: *term* ((`+` | `-`) *term*)*
-- **term**: *factor* ((`*` | `/` | `div` | `mod`) *factor*)*
-- **factor**: `+` *factor* | `-` *factor* | `(` *expr* `)` | **VALUE** | *variable*
+- **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*
+- **factor**: (`+` | `-` | `NOT`) *factor* | `(` *logic* `)` | *value* | *variable* | *call*
 
 ### Control flow
-- **control_flow**: `if` *expr* `then` (*body* | *statement*) (`else` (*body* | *statement*))?
+- **control_flow**: `IF` *logic* `THEN` *statement* (`ELSE` *statement*)?
 
 ### Loop
-- **loop**: `while` *expr* `do` (*body* | *statement*)
+- **loop**: `WHILE` *logic* `DO` *statement*
+- **jump**: `BREAK` | `CONTINUE` | *return*
+
+### Values
+- **value**: *number* | *boolean* | *string*
+- **number**:  ([0-9]*[.])?[0-9]+ 
+- **boolean**: `TRUE` | `FALSE`
+- **string**: `'` .*? `'`
