@@ -63,12 +63,16 @@ class Lexer:
       self._error(ErrorType.UNCLOSED_COMMENT)
     self._move_next()
 
-  def _integer(self) -> int:
+  def _number(self) -> int:
     cur = ""
-    while not self._is_eof and self.cur_char.isdigit():
+    is_real = False
+    while self.cur_char is not None and (self.cur_char.isdigit() or (
+            self.cur_char == TokenType.DOT.value and not is_real)):
+      if self.cur_char == TokenType.DOT.value:
+        is_real = True
       cur += self.cur_char
       self._move_next()
-    return int(cur)
+    return float(cur) if is_real else int(cur)
 
   def _string(self) -> str:
     cur = ""
@@ -128,7 +132,7 @@ class Lexer:
         return Token(line, column, TokenType.VALUE, self._string())
 
       if self.cur_char.isdigit():
-        return Token(line, column, TokenType.VALUE, self._integer())
+        return Token(line, column, TokenType.VALUE, self._number())
 
       # Must check 2 chars before punctuations to avoid ambiguity
       if self._seek() is not None and cur_char + self._seek() in OPERATORS2CHAR:
