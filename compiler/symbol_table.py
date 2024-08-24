@@ -1,6 +1,6 @@
 from typing import List
 from compiler.ast_node import ASTNode
-from compiler.constants import VariableType
+from compiler.constants import FunctionType
 
 
 class Symbol:
@@ -15,7 +15,7 @@ class Symbol:
 
   def __repr__(self) -> str:
     return f"<Symbol\t{self.name}>"
-  
+
   def __str__(self) -> str:
     return self.__repr__()
 
@@ -27,9 +27,9 @@ class VarSymbol(Symbol):
   A class to represent a variable symbol in the symbol table.
   """
 
-  def __init__(self, name: str, var_type: VariableType):
+  def __init__(self, name: str, var_type: FunctionType):
     super().__init__(name)
-    self.var_type: VariableType = var_type
+    self.var_type: FunctionType = var_type
 
   def __repr__(self) -> str:
     return f"<VarSymbol\t{self.name}:\t{self.var_type.name}>"
@@ -45,14 +45,14 @@ class FuncSymbol(Symbol):
   def __init__(
       self,
       name: str,
-      return_type: VariableType,
+      return_type: FunctionType,
       block_node: ASTNode = None,
-      param_types: List[VariableType] = None
+      param_types: List[FunctionType] = None
   ):
     super().__init__(name)
-    self.param_types: List[VariableType] = param_types or []
+    self.param_types: List[FunctionType] = param_types or []
     self.block_node: ASTNode = block_node
-    self.return_type: VariableType = return_type
+    self.return_type: FunctionType = return_type
 
   def __repr__(self) -> str:
     param_types = ", ".join([x.name for x in self.param_types])
@@ -80,12 +80,11 @@ class SymbolTable:
         ("Scope level", self.level),
         ("Parent scope", self.parent.name if self.parent is not None else None)
     ):
-      lines.append("%-15s: %s" % (header_name, header_value))
+      lines.append(f"{header_name:<15s}: {header_value}")
     h2 = "Scope contents"
     lines.extend([h2, "-" * len(h2)])
     lines.extend(
-        ("%7s: %r" % (key, value))
-        for key, value in self._symbols.items()
+        [f"{key}: {value!r}" for key, value in self._symbols.items()]
     )
     lines.append("\n")
     s = "\n".join(lines)

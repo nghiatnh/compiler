@@ -81,9 +81,9 @@ class Parser:
 
   def _id(self) -> Token:
     # ID
-    id = self.cur_token
+    id_ = self.cur_token
     self._eat(TokenType.ID)
-    return id
+    return id_
 
   # ========================================================================= #
   # Variables                                                                 #
@@ -102,16 +102,13 @@ class Parser:
 
   def _declaration(self) -> ASTNode:
     # ID (, ID)* : var_type
-    if self.cur_token.type == TokenType.ID:
-      declarations = [ASTNode(ASTNodeType.ID, self._id())]
-      while self.cur_token.type == TokenType.COMMA:
-        self._eat(TokenType.COMMA)
-        declarations.append(ASTNode(ASTNodeType.ID, self._id()))
-      self._eat(TokenType.COLON)
-      node = ASTNode(ASTNodeType.DECLARATION, self._var_type(), declarations)
-      return node
-    else:
-      self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
+    declarations = [ASTNode(ASTNodeType.ID, self._id())]
+    while self.cur_token.type == TokenType.COMMA:
+      self._eat(TokenType.COMMA)
+      declarations.append(ASTNode(ASTNodeType.ID, self._id()))
+    self._eat(TokenType.COLON)
+    node = ASTNode(ASTNodeType.DECLARATION, self._var_type(), declarations)
+    return node
 
   def _var_type(self) -> Token:
     # INTEGER | REAL | BOOLEAN | STRING
@@ -217,20 +214,19 @@ class Parser:
     # body | assign | call | control_flow | loop | jump
     if self.cur_token.type == TokenType.BEGIN:
       return self._body()
-    elif self.cur_token.type == TokenType.ID:
+    if self.cur_token.type == TokenType.ID:
       if self._lexer.cur_char == TokenType.LEFT_PAREN.value:
         return self._call()
       return self._assign()
-    elif self.cur_token.type == TokenType.IF:
+    if self.cur_token.type == TokenType.IF:
       return self._control_flow()
-    elif self.cur_token.type == TokenType.WHILE:
+    if self.cur_token.type == TokenType.WHILE:
       return self._loop()
-    elif self.cur_token.type in [
+    if self.cur_token.type in [
         TokenType.RETURN, TokenType.BREAK, TokenType.CONTINUE
     ]:
       return self._jump()
-    else:
-      self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
+    self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
 
   def _logic(self) -> ASTNode:
     # expr ((AND | OR | = | <> | < | <= | > | >=) expr)*
@@ -275,17 +271,16 @@ class Parser:
     if token.type == TokenType.VALUE:
       self._eat(TokenType.VALUE)
       return ASTNode(ASTNodeType.VALUE, token)
-    elif token.type == TokenType.ID:
+    if token.type == TokenType.ID:
       if self._lexer.cur_char == TokenType.LEFT_PAREN.value:
         return self._call()
       return ASTNode(ASTNodeType.ID, self._id())
-    elif token.type == TokenType.LEFT_PAREN:
+    if token.type == TokenType.LEFT_PAREN:
       self._eat(TokenType.LEFT_PAREN)
       node = self._logic()
       self._eat(TokenType.RIGHT_PAREN)
       return node
-    else:
-      self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
+    self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
 
   # ========================================================================= #
   # Control flow                                                              #
@@ -315,7 +310,7 @@ class Parser:
     self._eat(TokenType.DO)
     node.children.append(self._statement())
     return node
-  
+
   def _jump(self) -> ASTNode:
     # BREAK | CONTINUE | return
     token = self.cur_token

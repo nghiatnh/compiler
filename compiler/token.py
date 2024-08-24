@@ -14,12 +14,12 @@ class Token:
       self,
       line: int,
       column: int,
-      type: TokenType,
+      token_type: TokenType,
       value: Optional[Union[int, float, bool, str]] = None
   ):
     self.line = line
     self.column = column
-    self.type = type
+    self.type = token_type
     self.value = value
 
   def __repr__(self) -> str:

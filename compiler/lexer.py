@@ -152,8 +152,8 @@ class Lexer:
       if cur_char.isalpha():
         _id = self._identifier()
         if _id in [TokenType.TRUE.value, TokenType.FALSE.value]:
-          return Token(
-              line, column, TokenType.VALUE, _id == TokenType.TRUE.value)
+          value = _id == TokenType.TRUE.value
+          return Token(line, column, TokenType.VALUE, value)
         if _id in KEYWORDS:
           return Token(line, column, KEYWORDS[_id], _id)
         return Token(line, column, TokenType.ID, _id)
