@@ -119,6 +119,21 @@ class ReturnType(Enum):
   VOID = "VOID"
 
 
+class OpCode(Enum):
+  MOV = "MOV"
+  GET_ENV = "GET_ENV"
+  SET_ENV = "SET_ENV"
+  SYSCALL = "SYSCALL"
+  CONST = "CONST"
+  BINOP = "BINOP"
+  NEG = "NEG"
+  NOT = "NOT"
+  JMP = "JMP"
+  JMPF = "JMPF"
+  CALL = "CALL"
+  RET = "RET"
+
+
 # =========================================================================== #
 # Constants                                                                   #
 # =========================================================================== #
