@@ -25,8 +25,14 @@ class ASTNode:
     self._token = token
     self._children = children or []
 
+  def __str__(self) -> str:
+    return f"<ASTNode {self.type.name}: {self.token.value}>"
+
+  def __repr__(self) -> str:
+    return self.__str__()
+
   def _add_node(self, dot: graphviz.Digraph):
-    if self.token and self.token.value:
+    if self.token and self.token.value is not None:
       dot.node(str(id(self)), f"{self.type.name}: {self.token.value}")
     else:
       dot.node(str(id(self)), f"{self.type.name}")

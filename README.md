@@ -27,7 +27,7 @@
 
 ### Statements
 - **statements**: (*statement* `;`)* *statement*
-- **statement**: *body* | *assign* | *control_flow* | *loop* | *jump*
+- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump*
 - **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
 - **expr**: *term* ((`+` | `-`) *term*)*
 - **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*

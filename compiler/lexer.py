@@ -25,7 +25,7 @@ class Lexer:
   token. It skips whitespaces and comments.
   """
 
-  def __init__(self, text: str, * , case_sentitive: bool = False):
+  def __init__(self, text: str, *, case_sentitive: bool = False):
     self._text = text
     self._pos = 0
     self._line = 1
@@ -69,7 +69,7 @@ class Lexer:
       cur += self.cur_char
       self._move_next()
     return int(cur)
-  
+
   def _string(self) -> str:
     cur = ""
     while not self._is_eof and self.cur_char != TokenType.SINGLE_QUOTE.value:
@@ -147,6 +147,9 @@ class Lexer:
 
       if cur_char.isalpha():
         _id = self._identifier()
+        if _id in [TokenType.TRUE.value, TokenType.FALSE.value]:
+          return Token(
+              line, column, TokenType.VALUE, _id == TokenType.TRUE.value)
         if _id in KEYWORDS:
           return Token(line, column, KEYWORDS[_id], _id)
         return Token(line, column, TokenType.ID, _id)

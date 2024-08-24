@@ -118,8 +118,14 @@ class SemanticAnalyzer(ASTNodeVisitor):
     return var_symbol.var_type
 
   def _visit_value(self, node: ASTNode) -> VariableType:
+    if isinstance(node.token.value, bool):
+      return VariableType.BOOLEAN
+    if isinstance(node.token.value, float):
+      return VariableType.REAL
     if isinstance(node.token.value, int):
       return VariableType.INTEGER
+    if isinstance(node.token.value, str):
+      return VariableType.STRING
     else:
       raise NotImplementedError("Invalid type")
 

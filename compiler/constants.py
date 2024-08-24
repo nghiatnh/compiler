@@ -70,27 +70,37 @@ class TokenType(Enum):
 
 
 class ASTNodeType(Enum):
-  EMPTY = 0
-  PROGRAM = 1
-  VAR = 2
-  ASSIGN = 3
-  CONTROL_FLOW = 4
-  LOOP = 5
-  BLOCK = 6
-  BINARY_OP = 7
-  UNARY_OP = 8
-  STATEMENTS = 9
-  STATEMENT = 10
-  ID = 11
-  VALUE = 12
-  DECLARATION = 13
-  FUNC_DECL = 15
-  PARAMS = 16
-  CALL = 17
-  TYPE = 18
-  RETURN = 19
-  BREAK = 20
-  CONTINUE = 21
+  EMPTY = "EMPTY"
+
+  # Program
+  PROGRAM = "PROGRAM"
+  BLOCK = "BLOCK"
+
+  # Variables
+  VAR = "VAR"
+  DECLARATION = "DECLARATION"
+  TYPE = "TYPE"
+  ASSIGN = "ASSIGN"
+
+  # Functions
+  FUNC_DECL = "FUNC_DECL"
+  FUNC_PARAMS = "PARAMS"
+  CALL = "CALL"
+  RETURN = "RETURN"
+
+  # Statements
+  BINARY_OP = "BINARY_OP"
+  UNARY_OP = "UNARY_OP"
+  STATEMENTS = "STATEMENTS"
+  STATEMENT = "STATEMENT"
+  ID = "ID"
+  VALUE = "VALUE"
+
+  # Loop/Control flow
+  LOOP = "LOOP"
+  BREAK = "BREAK"
+  CONTINUE = "CONTINUE"
+  CONTROL_FLOW = "CONTROL_FLOW"
 
 
 class ErrorType(Enum):

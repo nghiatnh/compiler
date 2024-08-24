@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from compiler.constants import TokenType
 
@@ -15,7 +15,7 @@ class Token:
       line: int,
       column: int,
       type: TokenType,
-      value: Optional[int] = None
+      value: Optional[Union[int, float, bool, str]] = None
   ):
     self.line = line
     self.column = column
