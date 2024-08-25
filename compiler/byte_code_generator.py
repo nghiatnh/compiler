@@ -9,11 +9,11 @@ from compiler.constants import TokenType
 from compiler.constants import OpCode
 
 
-class CodeGeneratorError(Exception):
+class ByteCodeGeneratorError(Exception):
   """
-  CodeGeneratorError
-  ==================
-  CodeGeneratorError is an exception class that is raised when an error occurs
+  ByteCodeGeneratorError
+  ======================
+  ByteCodeGeneratorError is an exception class that is raised when an error occurs
   during code generation.
   """
 
@@ -31,11 +31,11 @@ class Loop:
     self.parent = parent
 
 
-class CodeGenerator:
+class ByteCodeGenerator:
   """
-  CodeGenerator
-  =============
-  CodeGenerator is a class that is used to generate code from the abstract
+  ByteCodeGenerator
+  =================
+  ByteCodeGenerator is a class that is used to generate code from the abstract
   syntax tree. The code generator will traverse the tree and generate code for
   each node in the tree.
   """
@@ -51,7 +51,7 @@ class CodeGenerator:
   # ========================================================================= #
 
   def _error(self, message: str, node: ASTNode):
-    raise CodeGeneratorError(
+    raise ByteCodeGeneratorError(
         f"{message}, line {node.token.line}, column {node.token.column}")
 
   def _flat_scopes(
@@ -271,7 +271,7 @@ class CodeGenerator:
 
   def generate(self, root: ASTNode) -> SymbolTable:
     """
-    Generate code from the abstract syntax tree.
+    Generate byte code from the abstract syntax tree.
     """
     self._enter_scope(self._global_scope.level, self._global_scope.name)
     self._generate(root)
