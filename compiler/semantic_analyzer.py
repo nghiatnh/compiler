@@ -19,15 +19,17 @@ class Function:
   """
   Function
   ========
+  Function class is a class that is used to represent a function in the symbol
+  table. It contains a function symbol and a reference to the parent function.
   """
 
-  def __init__(self, func: FuncSymbol, parent: "Function" = None) -> None:
-    self._func = func
+  def __init__(self, symbol: FuncSymbol, parent: "Function" = None) -> None:
+    self._symbol = symbol
     self._parent = parent
 
   @property
-  def func(self) -> FuncSymbol:
-    return self._func
+  def symbol(self) -> FuncSymbol:
+    return self._symbol
 
   @property
   def parent(self) -> "Function":
@@ -38,13 +40,15 @@ class Loop:
   """
   Loop
   ====
+  Loop class is a class that is used to represent a loop in the symbol table.
+  It contains a reference to the parent loop.
   """
 
   def __init__(self, parent: "Loop" = None) -> None:
     self._parent = parent
 
   @property
-  def parent(self) -> "Function":
+  def parent(self) -> "Loop":
     return self._parent
 
 
@@ -176,7 +180,7 @@ class SemanticAnalyzer:
     return_type = self._visit(block)
     if func_symbol.return_type != return_type:
       self._error(
-          (f"Return type mismatch {self._current_func.func.return_type.name} and "
+          (f"Return type mismatch {func_symbol.return_type.name} and "
            f"{return_type.name}"), node,
       )
     self._leave_function()
@@ -203,10 +207,10 @@ class SemanticAnalyzer:
     if self._current_func is None:
       self._error("Return statement outside function", node)
     return_type = self._visit(node.children[0])
-    if self._current_func.func.return_type != return_type:
+    if self._current_func.symbol.return_type != return_type:
       self._error(
-          f"Return type mismatch {self._current_func.func.return_type.name} and "
-          f"{return_type.name}", node,)
+          f"Return type mismatch {self._current_func.symbol.return_type.name} "
+          f"and {return_type.name}", node,)
     return return_type
 
   # ========================================================================= #
