@@ -111,7 +111,7 @@ class ErrorType(Enum):
   UNCLOSED_STRING = 5
 
 
-class FunctionType(Enum):
+class ReturnType(Enum):
   INTEGER = "INTEGER"
   REAL = "REAL"
   BOOLEAN = "BOOLEAN"

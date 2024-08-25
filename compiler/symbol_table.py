@@ -1,6 +1,6 @@
 from typing import List
 from compiler.ast_node import ASTNode
-from compiler.constants import FunctionType
+from compiler.constants import ReturnType
 
 
 class Symbol:
@@ -27,9 +27,9 @@ class VarSymbol(Symbol):
   A class to represent a variable symbol in the symbol table.
   """
 
-  def __init__(self, name: str, var_type: FunctionType):
+  def __init__(self, name: str, var_type: ReturnType):
     super().__init__(name)
-    self.var_type: FunctionType = var_type
+    self.var_type: ReturnType = var_type
 
   def __repr__(self) -> str:
     return f"<VarSymbol\t{self.name}:\t{self.var_type.name}>"
@@ -45,14 +45,14 @@ class FuncSymbol(Symbol):
   def __init__(
       self,
       name: str,
-      return_type: FunctionType,
+      return_type: ReturnType,
       block_node: ASTNode = None,
-      param_types: List[FunctionType] = None
+      param_types: List[ReturnType] = None
   ):
     super().__init__(name)
-    self.param_types: List[FunctionType] = param_types or []
+    self.param_types: List[ReturnType] = param_types or []
     self.block_node: ASTNode = block_node
-    self.return_type: FunctionType = return_type
+    self.return_type: ReturnType = return_type
 
   def __repr__(self) -> str:
     param_types = ", ".join([x.name for x in self.param_types])
@@ -71,6 +71,7 @@ class SymbolTable:
     self.name = name
     self.level = level
     self.parent = parent
+    self.children: List[SymbolTable] = []
 
   def __str__(self) -> str:
     h1 = "SCOPE INFO"
@@ -78,7 +79,8 @@ class SymbolTable:
     for header_name, header_value in (
         ("Scope name", self.name),
         ("Scope level", self.level),
-        ("Parent scope", self.parent.name if self.parent is not None else None)
+        ("Parent scope", self.parent.name if self.parent is not None else None),
+        ("Children scopes", ", ".join([x.name for x in self.children])),
     ):
       lines.append(f"{header_name:<15s}: {header_value}")
     h2 = "Scope contents"

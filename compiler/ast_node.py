@@ -3,7 +3,6 @@ import graphviz
 
 from compiler.token import Token
 from compiler.constants import ASTNodeType
-from compiler.constants import FunctionType
 
 
 class ASTNode:
@@ -31,14 +30,15 @@ class ASTNode:
   def __repr__(self) -> str:
     return self.__str__()
 
-  def add_node(self, dot: graphviz.Digraph):
-    if self.token and self.token.value is not None:
-      dot.node(str(id(self)), f"{self.type.name}: {self.token.value}")
+  @staticmethod
+  def _add_node(node: "ASTNode", dot: graphviz.Digraph):
+    if node.token and node.token.value is not None:
+      dot.node(str(id(node)), f"{node.type.name}: {node.token.value}")
     else:
-      dot.node(str(id(self)), f"{self.type.name}")
-    for child in self.children:
-      child.add_node(dot)
-      dot.edge(str(id(self)), str(id(child)))
+      dot.node(str(id(node)), f"{node.type.name}")
+    for child in node.children:
+      ASTNode._add_node(child, dot)
+      dot.edge(str(id(node)), str(id(child)))
 
   # ========================================================================= #
   # Properties                                                                #
@@ -65,36 +65,5 @@ class ASTNode:
     Render the abstract syntax tree to a file using graphviz.
     """
     dot = graphviz.Digraph()
-    self.add_node(dot)
+    ASTNode._add_node(self, dot)
     dot.render(filename, format="png", view=True)
-
-
-class ASTNodeVisitor:
-  """
-  ASTNodeVisitor
-  ==============
-  The ASTNodeVisitor class is an abstract class that defines the interface for
-  visiting the nodes in the abstract syntax tree.
-  """
-
-  def _generic_visit(self, node: ASTNode) -> FunctionType:
-    """
-    Generic visit method. This method will be called if a specific visit method
-    is not implemented for the given node's type.
-    """
-    raise NotImplementedError(
-        f"Method visit_{node.type.name.lower()} not implemented"
-    )
-
-  # ========================================================================= #
-  # Public methods                                                            #
-  # ========================================================================= #
-
-  def visit(self, node: ASTNode) -> FunctionType:
-    """
-    Visit the given node. This method will call the appropriate visit method
-    based on the node's type.
-    """
-    method_name = f"_visit_{node.type.name.lower()}"
-    visit_fn = getattr(self, method_name, self._generic_visit)
-    return visit_fn(node)
