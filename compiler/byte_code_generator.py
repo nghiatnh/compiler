@@ -7,6 +7,7 @@ from compiler.constants import ASTNodeType
 from compiler.constants import ReturnType
 from compiler.constants import TokenType
 from compiler.constants import OpCode
+from compiler.constants import BinaryOp
 
 
 class ByteCodeGeneratorError(Exception):
@@ -182,7 +183,8 @@ class ByteCodeGenerator:
     lindex = self._generate(node.children[0])
     rindex = self._generate(node.children[1])
     dst = self._scope.new_var()
-    self._add_code(OpCode.BINOP, [node.token.type, lindex, rindex, dst])
+    self._add_code(
+        OpCode.BINOP, [BinaryOp(node.token.type.value), lindex, rindex, dst])
     return dst
 
   def _generate_unary_op(self, node: ASTNode) -> int:
