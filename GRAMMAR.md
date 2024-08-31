@@ -25,10 +25,11 @@
 - **args**: *logic* (`,` *logic*)*
 - **return**: `RETURN` *logic*?
 - **func_name**: **ID**
+- **syscall**: `SYSCALL` `(` args `)`
 
 ### Statements
 - **statements**: (*statement* `;`)* *statement*
-- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump*
+- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump* | *syscall*
 - **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
 - **expr**: *term* ((`+` | `-`) *term*)*
 - **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*
@@ -46,3 +47,10 @@
 - **number**:  ([0-9]*[.])?[0-9]+ 
 - **boolean**: `TRUE` | `FALSE`
 - **string**: `'` .*? `'`
+
+
+# Built-in Functions
+
+### Syscalls
+- **write**: write(s: `STRING`; len: `INTEGER`): `VOID`. This function is used to write a string into the `stdout`.
+- **input**: input(len: `INTEGER`): `STRING`. This function is used to read a string from the `stdin`.
