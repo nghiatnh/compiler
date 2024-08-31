@@ -121,7 +121,7 @@ class ByteCodeGenerator:
     rindex = self._generate(node.children[0])
     if level == self._scope.level:
       return self._move_to(rindex, var_symbol.index)
-    self._add_code(OpCode.SET_ENV, [level, rindex, var_symbol.index])
+    self._add_code(OpCode.SET_ENV, [level, var_symbol.index, rindex])
     return self._move_to(rindex, self._scope.new_var())
 
   def _generate_type(self, node: ASTNode) -> ReturnType:
@@ -153,7 +153,7 @@ class ByteCodeGenerator:
     rtype = func_symbol.type
     self._add_code(
         OpCode.CALL,
-        [func_symbol.index, self._scope.stack, self._scope.level, level]
+        [func_symbol.index, self._scope.stack, self._scope.level, level + 1]
     )
     return -1 if rtype == ReturnType.VOID else self._scope.new_var()
 

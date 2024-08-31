@@ -163,6 +163,7 @@ class MachineCodeGenerator:
       dst_off = pos2off[scope.labels[label]]
       for patch_off in offsets:
         self._patch_addr(patch_off, dst_off)
+    self.code.append(0xc3)  # ret
     self.jmps.clear()
     for child in scope.children:
       self._scope(child)
