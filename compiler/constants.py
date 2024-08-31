@@ -103,14 +103,6 @@ class ASTNodeType(Enum):
   CONTROL_FLOW = "CONTROL_FLOW"
 
 
-class ErrorType(Enum):
-  UNEXPECTED_TOKEN = 1
-  UNMATCHED_COMMENT = 2
-  UNCLOSED_COMMENT = 3
-  EXPECT_TOKEN = 4
-  UNCLOSED_STRING = 5
-
-
 class ReturnType(Enum):
   INTEGER = "INTEGER"
   REAL = "REAL"

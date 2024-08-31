@@ -1,10 +1,10 @@
 from typing import List
+from compiler.error_reporter import ErrorType, CompileError, ErrorReporter
 from compiler.token import Token
 from compiler.lexer import Lexer
 from compiler.ast_node import ASTNode
 from compiler.constants import TokenType
 from compiler.constants import ASTNodeType
-from compiler.constants import ErrorType
 
 
 class ParserError(Exception):
@@ -24,21 +24,19 @@ class Parser:
   and constructing an abstract syntax tree (AST) for the input program.
   """
 
-  def __init__(self, lexer: Lexer):
+  def __init__(self, lexer: Lexer, error_reporter: ErrorReporter):
     self._lexer = lexer
     self._cur_token: Token = None
+    self._error_reporter = error_reporter
 
-  def _error(self, error_type: ErrorType, token: Token, message: str = ""):
-    raise ParserError(
-        f"Parser error code {error_type.value}: {error_type.name} at line"
-        f" {token.line}, column {token.column}, {message}"
-    )
+  def _error(self, error_type: ErrorType, token: Token, message: str = "") -> CompileError:
+    return self._error_reporter.error_token(error_type, token, message)
 
   def _eat(self, token_type: TokenType):
     if self._cur_token.type == token_type:
       self._cur_token = self._lexer.next_token()
     else:
-      self._error(
+      raise self._error(
           ErrorType.EXPECT_TOKEN, self._cur_token, f"Expect {token_type.value}"
       )
 
@@ -118,7 +116,7 @@ class Parser:
     ):
       self._eat(token.type)
       return token
-    self._error(ErrorType.UNEXPECTED_TOKEN, token)
+    raise self._error(ErrorType.INVALID_TYPE, token, f"Invalid type: {token.value}")
 
   def _assign(self) -> ASTNode:
     # ID := logic
@@ -226,7 +224,9 @@ class Parser:
         TokenType.RETURN, TokenType.BREAK, TokenType.CONTINUE
     ]:
       return self._jump()
-    self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
+    raise self._error(
+        ErrorType.UNEXPECTED_TOKEN, self.cur_token, f"Unexpected token: {self.cur_token.type.value}"
+    )
 
   def _logic(self) -> ASTNode:
     # expr ((AND | OR | = | <> | < | <= | > | >=) expr)*
@@ -280,7 +280,9 @@ class Parser:
       node = self._logic()
       self._eat(TokenType.RIGHT_PAREN)
       return node
-    self._error(ErrorType.UNEXPECTED_TOKEN, self.cur_token)
+    raise self._error(
+        ErrorType.UNEXPECTED_TOKEN, self.cur_token, f"Unexpected token: {token.type.value}"
+    )
 
   # ========================================================================= #
   # Control flow                                                              #
@@ -319,7 +321,7 @@ class Parser:
       return ASTNode(ASTNodeType(token.type.name), token)
     if token.type == TokenType.RETURN:
       return self._return()
-    self._error(ErrorType.UNEXPECTED_TOKEN, token)
+    raise self._error(ErrorType.UNEXPECTED_TOKEN, token, f"Unexpected token: {token.type.value}")
 
   # ========================================================================= #
   # Public methods                                                            #
@@ -339,5 +341,7 @@ class Parser:
     self._cur_token = self._lexer.next_token()
     node = self._program()
     if self.cur_token.type != TokenType.EOF:
-      self._error(ErrorType.UNEXPECTED_TOKEN, token=self.cur_token)
+      raise self._error(
+          ErrorType.UNEXPECTED_TOKEN, self.cur_token, f"Unexpected token: {self.cur_token.value}"
+      )
     return node

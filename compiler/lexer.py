@@ -1,19 +1,10 @@
 from compiler.token import Token
+from compiler.error_reporter import ErrorType, ErrorReporter, CompileError
 from compiler.constants import TokenType
-from compiler.constants import ErrorType
 from compiler.constants import PUNCTUATIONS
 from compiler.constants import KEYWORDS
 from compiler.constants import OPERATORS1CHAR
 from compiler.constants import OPERATORS2CHAR
-
-
-class LexerError(Exception):
-  """
-  LexerError
-  ==========
-  The lexer error class is a custom exception class for lexer errors. It
-  contains an error message with the error code and description.
-  """
 
 
 class Lexer:
@@ -25,22 +16,32 @@ class Lexer:
   token. It skips whitespaces and comments.
   """
 
-  def __init__(self, text: str, *, case_sentitive: bool = False):
+  def __init__(
+      self,
+      text: str,
+      error_reporter: ErrorReporter,
+      *,
+      case_sentitive: bool = False,
+  ):
     self._text = text
     self._pos = 0
     self._line = 1
     self._column = 1
     self._case_sensitive = case_sentitive
+    self._error_reporter = error_reporter
 
   @property
   def _is_eof(self) -> bool:
     return self._pos >= len(self._text)
 
-  def _error(self, error_type: ErrorType):
-    raise LexerError(
-        f"Lexer error code {error_type.value}: {error_type.name} at line"
-        f" {self._line}, column {self._column}"
-    )
+  def _error(
+      self,
+      error_type: ErrorType,
+      line: int,
+      column: int,
+      message: str = "",
+  ) -> CompileError:
+    return self._error_reporter.error(error_type, line, column, message)
 
   def _move_next(self):
     if not self._is_eof:
@@ -57,10 +58,11 @@ class Lexer:
       self._move_next()
 
   def _skip_comment(self):
+    save = (self._line, self._column - 1)
     while self.cur_char is not None and self.cur_char != TokenType.RIGHT_BRACE.value:
       self._move_next()
     if self.cur_char is None:
-      self._error(ErrorType.UNCLOSED_COMMENT)
+      raise self._error(ErrorType.UNCLOSED_COMMENT, *save, "Unclosed comment")
     self._move_next()
 
   def _number(self) -> int:
@@ -76,11 +78,12 @@ class Lexer:
 
   def _string(self) -> str:
     cur = ""
+    save = (self._line, self._column - 1)
     while not self._is_eof and self.cur_char != TokenType.SINGLE_QUOTE.value:
       cur += self.cur_char
       self._move_next()
     if self.cur_char is None:
-      self._error(ErrorType.UNCLOSED_STRING)
+      raise self._error(ErrorType.UNCLOSED_QUOTE, *save, "Unclosed quote")
     self._move_next()
     return cur
 
@@ -125,7 +128,9 @@ class Lexer:
       line, column = self._line, self._column
 
       if cur_char == TokenType.RIGHT_BRACE.value:
-        self._error(ErrorType.UNMATCHED_COMMENT)
+        raise self._error(
+            ErrorType.UNMATCHED_COMMENT, self._line, self._column, "Unmatched comment"
+        )
 
       if cur_char == TokenType.SINGLE_QUOTE.value:
         self._move_next()
@@ -158,6 +163,8 @@ class Lexer:
           return Token(line, column, KEYWORDS[_id], _id)
         return Token(line, column, TokenType.ID, _id)
 
-      self._error(ErrorType.UNEXPECTED_TOKEN)
+      raise self._error(
+          ErrorType.INVALID_CHARACTER, self._line, self._column, f"Invalid character {cur_char}"
+      )
 
     return Token(self._line, self._column, TokenType.EOF)

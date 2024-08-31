@@ -10,15 +10,6 @@ from compiler.constants import OpCode
 from compiler.constants import BinaryOp
 
 
-class ByteCodeGeneratorError(Exception):
-  """
-  ByteCodeGeneratorError
-  ======================
-  ByteCodeGeneratorError is an exception class that is raised when an error occurs
-  during code generation.
-  """
-
-
 class Loop:
   """
   Loop
@@ -50,10 +41,6 @@ class ByteCodeGenerator:
   # ========================================================================= #
   # Private methods                                                           #
   # ========================================================================= #
-
-  def _error(self, message: str, node: ASTNode):
-    raise ByteCodeGeneratorError(
-        f"{message}, line {node.token.line}, column {node.token.column}")
 
   def _flat_scopes(
       self, scope: SymbolTable

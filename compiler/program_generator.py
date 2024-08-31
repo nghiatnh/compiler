@@ -1,4 +1,5 @@
 from typing import Union
+
 from compiler.constants import ELF64_EHDR, ELF64_PHDR, ELF64_TYPE_SIZE
 
 
