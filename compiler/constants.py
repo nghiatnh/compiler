@@ -209,3 +209,46 @@ KEYWORDS = {
     TokenType.BREAK.value: TokenType.BREAK,
     TokenType.CONTINUE.value: TokenType.CONTINUE,
 }
+
+
+ELF64_TYPE_SIZE = {
+    "addr": 8,  # 8 unsigned program address
+    "off": 8,  # 8 unsigned file offset
+    "half": 2,  # 2 unsigned medium integer
+    "word": 4,  # 4 unsigned integer
+    "sword": 4,  # 4 signed integer
+    "xword": 8,  # 8 unsigned long integer
+    "sxword": 8,  # 8 signed long integer
+    "double_xword": 16,  # 16 double unsigned long integer
+    "s_double_xword": 16,  # 16 double signed long integer
+    "unsigned_char": 1,  # 1 unsigned small integer
+}
+
+ELF64_EHDR = [
+    ("e_ident", "double_xword"),  # ELF identification (actually 16-length array of unsigned char)
+    ("e_type", "half"),  # Object file type
+    ("e_machine", "half"),  # Machine type
+    ("e_version", "word"),  # Object file version
+    ("e_entry", "addr"),  # Entry point address
+    ("e_phoff", "off"),  # Program header offset
+    ("e_shoff", "off"),  # Section header offset
+    ("e_flags", "word"),  # Processor-specific flags
+    ("e_ehsize", "half"),  # ELF header size
+    ("e_phentsize", "half"),  # Size of program header entry
+    ("e_phnum", "half"),  # Number of program header entries
+    ("e_shentsize", "half"),  # Size of section header entry
+    ("e_shnum", "half"),  # Number of section header entries
+    ("e_shstrndx", "half"),  # Section name string table index
+]
+
+
+ELF64_PHDR = [
+    ("p_type", "word"),  # Type of segment
+    ("p_flags", "word"),  # Segment attributes
+    ("p_offset", "off"),  # Offset in file
+    ("p_vaddr", "addr"),  # Virtual address in memory
+    ("p_paddr", "addr"),  # Reserved
+    ("p_filesz", "xword"),  # Size of segment in file
+    ("p_memsz", "xword"),  # Size of segment in memory
+    ("p_align", "xword"),  # Alignment of segment
+]

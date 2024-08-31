@@ -148,8 +148,7 @@ class MachineCodeGenerator:
     # exit
     self.code.extend(
         b"\xb8\x3c\x00\x00\x00"  # mov eax, 60
-        # b"\x48\x8b\x3b"  # mov rdi, [rbx]
-        b"\x48\xbf\x00\x00\x00\x00\x00\x00\x00\x00"  # mov rdi, 0
+        b"\x48\x8b\x3b"  # mov rdi, [rbx]
         b"\x0f\x05"  # syscall
     )
 

@@ -1,5 +1,17 @@
 from typing import Union
-import numbers
+from compiler.constants import ELF64_EHDR, ELF64_PHDR, ELF64_TYPE_SIZE
+
+
+ET_EXEC = 2
+EV_CURRENT = 1
+EM_X86_64 = 62
+SHN_UNDEF = 0
+PT_LOAD = 1
+PF_X = 0x1
+PF_W = 0x2
+PF_R = 0x4
+
+DEFAULT_ENTRY_POINT = 0x400000
 
 
 class ELF64GeneratorError(Exception):
@@ -8,85 +20,6 @@ class ELF64GeneratorError(Exception):
   ===================
   ELF64GeneratorError is a class that represents an error in the ELF64Generator.
   """
-
-
-""" A definitely-not-complete list of some useful constants for generating an
-    ELF64 file
-"""
-
-ET_EXEC = 2
-
-EV_CURRENT = 1
-
-# see https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf
-EM_X86_64 = 62
-
-SHN_UNDEF = 0
-
-PT_LOAD = 1
-
-PF_X = 0x1
-PF_W = 0x2
-PF_R = 0x4
-
-
-DEFAULT_ENTRY_POINT = 0x400000
-
-#    ELF HEADER
-# ----------------
-#  Prog Hdr table
-# ----------------
-#     Segment
-# ----------------
-#       ...
-# ----------------
-# Section Hdr Tbl
-
-
-def uint(n, x):
-  return x.to_bytes(n, "little")
-
-
-ELF64_TYPE_SIZE = {
-    "addr": 8,  # 8 unsigned program address
-    "off": 8,  # 8 unsigned file offset
-    "half": 2,  # 2 unsigned medium integer
-    "word": 4,  # 4 unsigned integer
-    "sword": 4,  # 4 signed integer
-    "xword": 8,  # 8 unsigned long integer
-    "sxword": 8,  # 8 signed long integer
-    "unsigned_char": 1,  # 1 unsigned small integer
-    "16": 16,  # 16 bytes
-}
-
-ELF64_EHDR = [
-    ("e_ident", "16"),  # ELF identification (actually 16-length array of unsigned char)
-    ("e_type", "half"),  # Object file type
-    ("e_machine", "half"),  # Machine type
-    ("e_version", "word"),  # Object file version
-    ("e_entry", "addr"),  # Entry point address
-    ("e_phoff", "off"),  # Program header offset
-    ("e_shoff", "off"),  # Section header offset
-    ("e_flags", "word"),  # Processor-specific flags
-    ("e_ehsize", "half"),  # ELF header size
-    ("e_phentsize", "half"),  # Size of program header entry
-    ("e_phnum", "half"),  # Number of program header entries
-    ("e_shentsize", "half"),  # Size of section header entry
-    ("e_shnum", "half"),  # Number of section header entries
-    ("e_shstrndx", "half"),  # Section name string table index
-]
-
-
-ELF64_PHDR = [
-    ("p_type", "word"),  # Type of segment
-    ("p_flags", "word"),  # Segment attributes
-    ("p_offset", "off"),  # Offset in file
-    ("p_vaddr", "addr"),  # Virtual address in memory
-    ("p_paddr", "addr"),  # Reserved
-    ("p_filesz", "xword"),  # Size of segment in file
-    ("p_memsz", "xword"),  # Size of segment in memory
-    ("p_align", "xword"),  # Alignment of segment
-]
 
 
 class ELF64Generator:
@@ -121,7 +54,7 @@ class ELF64Generator:
 
   def _serialize(self, x: Union[int, bytes], elf64_type: str) -> bytes:
     size = self._to_size(elf64_type)
-    if isinstance(x, numbers.Number):
+    if isinstance(x, int):
       return x.to_bytes(size, "little")
     if isinstance(x, bytes):
       if len(x) != size:
@@ -206,4 +139,7 @@ class ELF64Generator:
   # ============================================================================================= #
 
   def generate(self, code: bytes) -> bytes:
+    """
+    Generate an ELF64 file from the given code.
+    """
     return b"".join([self._elf64_ehdr, self._program_header(len(code)), code])
