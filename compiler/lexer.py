@@ -20,14 +20,11 @@ class Lexer:
       self,
       text: str,
       error_reporter: ErrorReporter,
-      *,
-      case_sentitive: bool = False,
   ):
     self._text = text
     self._pos = 0
     self._line = 1
     self._column = 1
-    self._case_sensitive = case_sentitive
     self._error_reporter = error_reporter
 
   @property
@@ -108,7 +105,7 @@ class Lexer:
     if self._is_eof:
       return None
     cur_char = self._text[self._pos]
-    return cur_char if self._case_sensitive else cur_char.upper()
+    return cur_char
 
   def next_token(self) -> Token:
     """
@@ -156,11 +153,12 @@ class Lexer:
 
       if cur_char.isalpha():
         _id = self._identifier()
-        if _id in [TokenType.TRUE.value, TokenType.FALSE.value]:
-          value = _id == TokenType.TRUE.value
+        upper = _id.upper()
+        if upper in [TokenType.TRUE.value, TokenType.FALSE.value]:
+          value = upper == TokenType.TRUE.value
           return Token(line, column, TokenType.VALUE, value)
-        if _id in KEYWORDS:
-          return Token(line, column, KEYWORDS[_id], _id)
+        if upper in KEYWORDS:
+          return Token(line, column, KEYWORDS[upper], _id)
         return Token(line, column, TokenType.ID, _id)
 
       raise self._error(

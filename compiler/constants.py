@@ -51,6 +51,7 @@ class TokenType(Enum):
   PROGRAM = "PROGRAM"
   RETURN = "RETURN"
   FUNCTION = "FUNCTION"
+  SYSCALL = "SYSCALL"
   INTEGER = "INTEGER"
   REAL = "REAL"
   BOOLEAN = "BOOLEAN"
@@ -86,6 +87,7 @@ class ASTNodeType(Enum):
   FUNC_DECL = "FUNC_DECL"
   FUNC_PARAMS = "PARAMS"
   CALL = "CALL"
+  SYSCALL = "SYSCALL"
   RETURN = "RETURN"
 
   # Statements
@@ -192,6 +194,7 @@ KEYWORDS = {
     TokenType.INTEGER_DIV.value: TokenType.INTEGER_DIV,
     TokenType.INTEGER_MOD.value: TokenType.INTEGER_MOD,
     TokenType.FUNCTION.value: TokenType.FUNCTION,
+    TokenType.SYSCALL.value: TokenType.SYSCALL,
     TokenType.INTEGER.value: TokenType.INTEGER,
     TokenType.REAL.value: TokenType.REAL,
     TokenType.BOOLEAN.value: TokenType.BOOLEAN,

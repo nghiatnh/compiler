@@ -172,6 +172,15 @@ class Parser:
     self._eat(TokenType.RIGHT_PAREN)
     return node
 
+  def _syscall(self) -> ASTNode:
+    # SYSCALL ( func_args )
+    token = self.cur_token
+    self._eat(TokenType.SYSCALL)
+    self._eat(TokenType.LEFT_PAREN)
+    node = ASTNode(ASTNodeType.SYSCALL, token, self._func_args())
+    self._eat(TokenType.RIGHT_PAREN)
+    return node
+
   def _func_args(self) -> List[ASTNode]:
     # logic (, logic)*
     args = [self._logic()]
@@ -209,9 +218,11 @@ class Parser:
     return nodes
 
   def _statement(self) -> ASTNode:
-    # body | assign | call | control_flow | loop | jump
+    # body | assign | call | control_flow | loop | jump | syscall
     if self.cur_token.type == TokenType.BEGIN:
       return self._body()
+    if self.cur_token.type == TokenType.SYSCALL:
+      return self._syscall()
     if self.cur_token.type == TokenType.ID:
       if self._lexer.cur_char == TokenType.LEFT_PAREN.value:
         return self._call()

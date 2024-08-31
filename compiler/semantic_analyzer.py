@@ -219,6 +219,25 @@ class SemanticAnalyzer:
         )
     return func_symbol.type
 
+  def _analyze_syscall(self, node: ASTNode) -> ReturnType:
+    if len(node.children) < 1:
+      raise self._error(
+          ErrorType.INVALID_ARGUMENT, node,
+          f"Syscall expects at least 1 arguments, got {len(node.children)}",
+      )
+    if len(node.children) > 7:
+      raise self._error(
+          ErrorType.INVALID_ARGUMENT, node,
+          f"Syscall expects at most 7 arguments, got {len(node.children)}",
+      )
+    for child in node.children:
+      ret_type = self._analyze(child)
+      if ret_type == ReturnType.VOID:
+        raise self._error(
+            ErrorType.INVALID_ARGUMENT, node, "Invalid argument type VOID",
+        )
+    return ReturnType.INTEGER
+
   def _analyze_return(self, node: ASTNode) -> ReturnType:
     if self._current_func is None:
       raise self._error(

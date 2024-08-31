@@ -134,7 +134,7 @@ class SymbolTable:
     Add a symbol to the symbol table.
     """
     symbol.index = self.new_var()
-    self._symbols[symbol.name] = symbol
+    self._symbols[symbol.name.upper()] = symbol
 
   def lookup(
       self, name: str, current_scope_only: bool = False
@@ -143,7 +143,7 @@ class SymbolTable:
     Lookup a symbol in the symbol table. If the symbol is not found in the
     current symbol table, lookup in the parent symbol table if it exists.
     """
-    symbol = self._symbols.get(name, None)
+    symbol = self._symbols.get(name.upper(), None)
     if symbol is not None:
       return self.level, symbol
 
@@ -151,7 +151,7 @@ class SymbolTable:
       return -1, None
 
     if self.parent is not None:
-      return self.parent.lookup(name)
+      return self.parent.lookup(name.upper())
 
     return -1, None
 

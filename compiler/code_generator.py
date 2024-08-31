@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 import struct
 
 from compiler.symbol_table import SymbolTable
@@ -168,9 +168,9 @@ class MachineCodeGenerator:
     for child in scope.children:
       self._scope(child)
 
-    # ========================================================================= #
-    # Generation methods                                                        #
-    # ========================================================================= #
+  # ========================================================================= #
+  # Generation methods                                                        #
+  # ========================================================================= #
 
   def _mov_(self, dst: int, src: int):
     if src == dst:
@@ -284,6 +284,18 @@ class MachineCodeGenerator:
       self.code.extend(b"\x48\xb8")  # mov rax, imm64
       self._i64(val)
     self._store_rax(dst)
+
+  def _syscall_(self, *arg_list):
+    dst, num, *arg_list = arg_list
+    self.code.extend(b"\xb8")
+    self._i32(0)
+    self._asm_load(Registers.A, Registers.B, num * 8)  # mov eax, num
+    arg_regs = [Registers.DI, Registers.SI, Registers.D, 10, 8, 9]
+    assert len(arg_list) <= len(arg_regs)
+    for i, arg in enumerate(arg_list):
+      self._asm_load(arg_regs[i], Registers.B, arg * 8)  # mov reg, [rbx + arg*8]
+    self.code.extend(b"\x0f\x05")  # syscall
+    self._store_rax(dst)  # mov [rbx + dst*8], rax
 
   # ========================================================================= #
   # Public methods                                                            #

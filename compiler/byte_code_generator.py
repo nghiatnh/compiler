@@ -157,6 +157,21 @@ class ByteCodeGenerator:
     )
     return -1 if rtype == ReturnType.VOID else self._scope.new_var()
 
+  def _generate_syscall(self, node: ASTNode) -> int:
+    dst = self._scope.new_var()
+    args = [dst]
+    for child in node.children:
+      save = self._scope.stack
+      rindex = self._generate(child)
+      self._scope.stack = save
+      args.append(self._scope.new_var())
+      self._move_to(rindex, args[-1])
+
+    self._scope.stack -= len(node.children)
+
+    self._add_code(OpCode.SYSCALL, args)
+    return dst
+
   def _generate_return(self, node: ASTNode) -> int:
     rindex = self._generate(node.children[0])
     self._add_code(OpCode.RET, [rindex])
