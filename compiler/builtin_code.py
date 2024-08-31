@@ -6,6 +6,18 @@ END;
 """
 
 
+INPUT = """
+FUNCTION input(len: INTEGER): STRING;
+VAR result: STRING;
+BEGIN
+  result := '';
+  SYSCALL(0, 0, result, len);
+  RETURN result;
+END;
+"""
+
+
 BUILT_IN_CODES = [
     WRITE,
+    INPUT,
 ]
