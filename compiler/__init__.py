@@ -1,5 +1,6 @@
 import sys
 
+from compiler.ast_node import ASTNode
 from compiler.logger import LOGGER
 from compiler.error_reporter import ErrorReporter, CompileError
 from compiler.lexer import Lexer
@@ -8,6 +9,15 @@ from compiler.semantic_analyzer import SemanticAnalyzer
 from compiler.byte_code_generator import ByteCodeGenerator
 from compiler.code_generator import MachineCodeGenerator
 from compiler.program_generator import ELF64Generator
+from compiler.builtin_code import BUILT_IN_CODES
+
+
+def _parse_built_in(built_in_code: str) -> ASTNode:
+  error_reporter = ErrorReporter(built_in_code)
+  lexer = Lexer(built_in_code, error_reporter)
+  parser = Parser(lexer, error_reporter)
+  parser.cur_token = lexer.next_token()
+  return parser.parse_func()
 
 
 def compile_code(text: str) -> bytes:
@@ -20,6 +30,8 @@ def compile_code(text: str) -> bytes:
     lexer = Lexer(text, error_reporter)
     parser = Parser(lexer, error_reporter)
     root = parser.parse()
+    for code in BUILT_IN_CODES:
+      root.children[0].children.insert(1, _parse_built_in(code))
     LOGGER.info("Compiling code")
     sa = SemanticAnalyzer(error_reporter)
     scope = sa.analyze(root)

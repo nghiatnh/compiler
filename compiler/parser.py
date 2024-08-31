@@ -345,6 +345,19 @@ class Parser:
     """
     return self._cur_token
 
+  @cur_token.setter
+  def cur_token(self, value: Token):
+    """
+    Set the current token.
+    """
+    self._cur_token = value
+
+  def parse_func(self) -> ASTNode:
+    """
+    Parse a function declaration and return the corresponding AST node.
+    """
+    return self._func_decl()
+
   def parse(self) -> ASTNode:
     """
     Parse the input program and return the abstract syntax tree (AST).

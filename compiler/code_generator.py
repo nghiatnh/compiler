@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List
 import struct
 
 from compiler.symbol_table import SymbolTable

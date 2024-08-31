@@ -151,9 +151,13 @@ class ByteCodeGenerator:
     self._scope.stack -= len(node.children)
 
     rtype = func_symbol.type
+    func_index = next(
+        i for i, x in enumerate(self._scopes)
+        if (x[0], x[1].upper()) == (level + 1, func_name.upper())
+    ) - 1
     self._add_code(
         OpCode.CALL,
-        [func_symbol.index, self._scope.stack, self._scope.level, level + 1]
+        [func_index, self._scope.stack, self._scope.level, level + 1]
     )
     return -1 if rtype == ReturnType.VOID else self._scope.new_var()
 
