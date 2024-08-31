@@ -1,47 +1,11 @@
-# Grammar (Pascal-like)
+# Compiler
 
-### Comment
-- **comment**: `{` *any* `}`
+I am building a simple compiler from scratch to understand how compilers work. This compiler uses Pascal as the [grammar](./GRAMMAR.md) (with some modifications), and the code will be compiled to the 64-bit ELF format. This project follows the book [From Source Code To Machine Code](https://build-your-own.org/compiler/) by **James Smith**. I modified the code for generating the ELF file because the author's code did not work for me. The code to generate the ELF file follows the project [elf-from-scratch](https://github.com/statusfailed/elf-from-scratch) by **statusfailed**. The way I separate the code modules follows the blog [Let’s Build A Simple Interpreter](https://ruslanspivak.com/lsbasi-part1/) by **Ruslan**.
 
-### Program
-- **program**: `PROGRAM` *prog_name* `;` *block* `.`
-- **block**: *var_decl*? *func_decl** *body*
-- **body**: `BEGIN` *statements*? `END`
-- **prog_name**: **ID**
+# How to run?
 
-### Variables
-- **var_decl**: `VAR` (*declaration* `;`)+
-- **declaration**: *variable* (`,` *variable*)* `:` *var_type*
-- **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING`
-- **assign**: *variable* `:=` *logic*
-- **variable**: **ID**
-
-### Functions
-- **func_decl**: `FUNCTION` *func_name* `(` *params*? `)` `:` *func_type* `;` *block* `;`
-- **params**: *declaration* (`;` *declaration*)*
-- **func_type**: *var_type* | `VOID`
-- **call**: *func_name* `(` *args*? `)`
-- **args**: *logic* (`,` *logic*)*
-- **return**: `RETURN` *logic*?
-- **func_name**: **ID**
-
-### Statements
-- **statements**: (*statement* `;`)* *statement*
-- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump*
-- **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
-- **expr**: *term* ((`+` | `-`) *term*)*
-- **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*
-- **factor**: (`+` | `-` | `NOT`) *factor* | `(` *logic* `)` | *value* | *variable* | *call*
-
-### Control flow
-- **control_flow**: `IF` *logic* `THEN` *statement* (`ELSE` *statement*)?
-
-### Loop
-- **loop**: `WHILE` *logic* `DO` *statement*
-- **jump**: `BREAK` | `CONTINUE` | *return*
-
-### Values
-- **value**: *number* | *boolean* | *string*
-- **number**:  ([0-9]*[.])?[0-9]+ 
-- **boolean**: `TRUE` | `FALSE`
-- **string**: `'` .*? `'`
+```bash
+python3 -m compiler <filename>
+./main.elf
+echo $?
+```
