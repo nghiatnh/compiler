@@ -11,4 +11,7 @@
     "--indent-size",
     "2",
   ],
+  "editor.rulers": [100],
+  "editor.tabSize": 2,
+  "editor.indentSize": "tabSize",
 }
