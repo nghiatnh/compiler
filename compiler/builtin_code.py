@@ -1,9 +1,24 @@
+# =========================================================================== #
+# STD LIBS                                                                    #
+# =========================================================================== #
+
+VAR_DECL = """
+VAR BuiltInHeap: POINTER;
+"""
+
+EXIT = """
+FUNCTION exit(code: INTEGER): VOID;
+BEGIN
+  SYSCALL(60, code);
+END;
+"""
+
 MALLOC = """
 FUNCTION malloc(n: INTEGER): POINTER;
 VAR heapsz, prot, flags, fd, offset, tmp: INTEGER;
 result: POINTER;
 BEGIN
-  IF heap = (CAST POINTER, 0) THEN
+  IF BuiltInHeap = (CAST POINTER, 0) THEN
   BEGIN
     heapsz := 255;
     prot := 3;
@@ -11,14 +26,17 @@ BEGIN
     fd := -1;
     offset := 0;
     tmp := SYSCALL(9, 0, heapsz, prot, flags, fd, offset);
-    heap := CAST POINTER, tmp;
+    BuiltInHeap := CAST POINTER, tmp;
   END;
-  result := heap;
-  heap := heap + n;
+  result := BuiltInHeap;
+  BuiltInHeap := BuiltInHeap + n;
   RETURN result;
 END;
 """
 
+# =========================================================================== #
+# STR LIBS                                                                    #
+# =========================================================================== #
 
 STRNEW = """
 FUNCTION strnew(cap: INTEGER): POINTER;
@@ -112,6 +130,10 @@ BEGIN
 END;
 """
 
+# =========================================================================== #
+# IO LIBS                                                                     #
+# =========================================================================== #
+
 WRITE = """
 FUNCTION write(s: POINTER; len: INTEGER): VOID;
 BEGIN
@@ -129,6 +151,23 @@ BEGIN
 END;
 """
 
+WRITE_STR = """
+FUNCTION writestr(s: STRING; len: INTEGER): VOID;
+BEGIN
+  SYSCALL(1, 1, s, len);
+END;
+"""
+
+WRITELN_STR = """
+FUNCTION writelnstr(s: STRING; len: INTEGER): VOID;
+VAR tmp: POINTER;
+BEGIN
+  SYSCALL(1, 1, s, len);
+  tmp := strnew(1);
+  strappend(s, 10);
+  SYSCALL(1, 1, s, 1);
+END;
+"""
 
 INPUT = """
 FUNCTION input(len: INTEGER): POINTER;
@@ -148,24 +187,16 @@ BEGIN
 END;
 """
 
-EXIT = """
-FUNCTION exit(code: INTEGER): VOID;
-BEGIN
-  SYSCALL(60, code);
-END;
-"""
+# =========================================================================== #
+# BUILT-IN CODES                                                              #
+# =========================================================================== #
 
-BUILT_IN_CODES = [
-    EXIT,
-    MALLOC,
-    STRNEW,
-    STRLEN,
-    STRCAP,
-    APPEND,
-    STRREV,
-    ITOA,
-    ATOI,
-    WRITE,
-    WRITELN,
-    INPUT,
-]
+STDLIBS = [VAR_DECL, EXIT, MALLOC]
+STRLIBS = [*STDLIBS, STRNEW, STRLEN, STRCAP, APPEND, STRREV, ITOA, ATOI]
+IOLIBS = [*STRLIBS, WRITE, WRITELN, INPUT]
+
+BUILT_IN_CODES = {
+    "STDLIBS": STDLIBS,
+    "STRLIBS": STRLIBS,
+    "IOLIBS": IOLIBS,
+}

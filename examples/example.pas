@@ -2,6 +2,8 @@ PROGRAM fibonacci;
 VAR heap, str: POINTER;
 s: STRING;
 
+{ INCLUDE IOLIBS }
+
 FUNCTION fib(n: integer): integer;
 BEGIN
   IF n <= 2 THEN RETURN 1;

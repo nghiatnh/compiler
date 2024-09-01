@@ -4,6 +4,9 @@
 ### Comment
 - **comment**: `{` *any* `}`
 
+### Macros
+- **include**: `{INCLUDE` *name* `}`
+
 ### Program
 - **program**: `PROGRAM` *prog_name* `;` *block* `.`
 - **block**: *var_decl*? *func_decl** *body*
@@ -11,7 +14,7 @@
 - **prog_name**: **ID**
 
 ### Variables
-- **var_decl**: `VAR` (*declaration* `;`)+
+- **var_decl**: (`VAR` (*declaration* `;`)+)+
 - **declaration**: *variable* (`,` *variable*)* `:` *var_type*
 - **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING` | `POINTER`
 - **assign**: *variable* `:=` *logic*

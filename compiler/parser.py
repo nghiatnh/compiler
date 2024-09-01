@@ -88,14 +88,16 @@ class Parser:
   # ========================================================================= #
 
   def _var_decl(self) -> ASTNode:
-    # VAR (declaration ;)+
+    # (VAR (declaration ;)+)+
     token = self.cur_token
-    self._eat(TokenType.VAR)
-    declarations = [self._declaration()]
-    self._eat(TokenType.SEMICOLON)
-    while self.cur_token.type == TokenType.ID:
+    declarations = []
+    while self.cur_token.type == TokenType.VAR:
+      self._eat(TokenType.VAR)
       declarations.append(self._declaration())
       self._eat(TokenType.SEMICOLON)
+      while self.cur_token.type == TokenType.ID:
+        declarations.append(self._declaration())
+        self._eat(TokenType.SEMICOLON)
     return ASTNode(ASTNodeType.VAR, token, declarations)
 
   def _declaration(self) -> ASTNode:

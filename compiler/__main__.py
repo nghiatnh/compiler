@@ -3,7 +3,7 @@ import argparse
 import logging
 from dataclasses import dataclass
 
-from compiler import compile_code
+from compiler import Compiler
 from compiler.logger import LOGGER
 
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
   LOGGER.info("Reading code from %s", args.filename)
   with open(args.filename, "r", encoding="utf-8") as f:
     text = f.read()
-  MACHINE_CODE = compile_code(text)
+  MACHINE_CODE = Compiler().compile(text)
   LOGGER.info("Writing machine code to %s", args.output)
   if os.path.exists(args.output):
     os.unlink(args.output)
