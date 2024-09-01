@@ -16,8 +16,15 @@ BEGIN
 END;
 """
 
+EXIT = """
+FUNCTION exit(code: INTEGER): VOID;
+BEGIN
+  SYSCALL(60, code);
+END;
+"""
 
 BUILT_IN_CODES = [
     WRITE,
     INPUT,
+    EXIT,
 ]

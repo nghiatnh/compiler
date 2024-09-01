@@ -297,6 +297,36 @@ class MachineCodeGenerator:
     self.code.extend(b"\x0f\x05")  # syscall
     self._store_rax(dst)  # mov [rbx + dst*8], rax
 
+  def _peek_(self, ptr: int, dst: int):
+    self._load_rax(ptr)
+    # mov rax, [rax]
+    self._asm_load(Registers.A, Registers.A, 0)
+    self._store_rax(dst)
+
+  def _poke_(self, ptr: int, src: int):
+    # mov rdx, [rbx + src * 8]
+    self._asm_load(Registers.D, Registers.B, src * 8)
+    # mov [rbx + ptr * 8], rdx
+    self._asm_store(Registers.B, ptr * 8, Registers.D)
+
+  def _ref_(self, ptr: int, dst: int):
+    # lea rax, [rbx + ptr * 8]
+    self.code.extend(b"\x48\x8d\x83")
+    self.code.extend(struct.pack("<i", ptr * 8))
+    self._store_rax(dst)
+
+  def _lea_(self, src: int, offset: int, sign: int, dst: int):
+    # mov rdx, [rbx + src * 8]
+    self._asm_load(Registers.D, Registers.B, src * 8)
+    # mov rax, [rbx + offset * 8]
+    self._asm_load(Registers.A, Registers.B, offset * 8)
+    if sign < 0:
+      # neg rax
+      self.code.extend(b"\x48\xf7\xd8")
+    # lea rax, [rdx + rax * 8]
+    self.code.extend(b"\x48\x8d\x04\xc2")
+    self._store_rax(dst)
+
   # ========================================================================= #
   # Public methods                                                            #
   # ========================================================================= #

@@ -56,6 +56,10 @@ class ASTNode:
   def type(self) -> ASTNodeType:
     return self._type
 
+  @type.setter
+  def type(self, value: ASTNodeType):
+    self._type = value
+
   # ========================================================================= #
   # Public methods                                                            #
   # ========================================================================= #

@@ -112,18 +112,16 @@ class Parser:
     # INTEGER | REAL | BOOLEAN | STRING
     token = self.cur_token
     if token.type in (
-        TokenType.INTEGER, TokenType.REAL, TokenType.BOOLEAN, TokenType.STRING
+        TokenType.INTEGER, TokenType.REAL, TokenType.BOOLEAN, TokenType.STRING, TokenType.POINTER,
     ):
       self._eat(token.type)
       return token
     raise self._error(ErrorType.INVALID_TYPE, token, f"Invalid type: {token.value}")
 
   def _assign(self) -> ASTNode:
-    # ID := (logic | syscall)
+    # ID := logic
     var_name = self._id()
     self._eat(TokenType.ASSIGN)
-    if self.cur_token.type == TokenType.SYSCALL:
-      return ASTNode(ASTNodeType.ASSIGN, var_name, [self._syscall()])
     return ASTNode(ASTNodeType.ASSIGN, var_name, [self._logic()])
 
   # ========================================================================= #
@@ -220,9 +218,11 @@ class Parser:
     return nodes
 
   def _statement(self) -> ASTNode:
-    # body | assign | call | control_flow | loop | jump | syscall
+    # body | assign | call | control_flow | loop | jump | poke
     if self.cur_token.type == TokenType.BEGIN:
       return self._body()
+    if self.cur_token.type == TokenType.POKE:
+      return self._poke()
     if self.cur_token.type == TokenType.SYSCALL:
       return self._syscall()
     if self.cur_token.type == TokenType.ID:
@@ -276,8 +276,12 @@ class Parser:
     return node
 
   def _factor(self) -> ASTNode:
-    # (+ | - | NOT) | value | ID | call | ( logic )
+    # (+ | - | NOT) | value | ID | call | ( logic ) | syscall | peek | ref
     token = self.cur_token
+    if token.type == TokenType.PEEK:
+      return self._peek()
+    if token.type == TokenType.REF:
+      return self._ref()
     if token.type in [TokenType.PLUS, TokenType.MINUS, TokenType.NOT]:
       self._eat(token.type)
       return ASTNode(ASTNodeType.UNARY_OP, token, [self._factor()])
@@ -296,6 +300,25 @@ class Parser:
     raise self._error(
         ErrorType.UNEXPECTED_TOKEN, self.cur_token, f"Unexpected token: {token.type.value}"
     )
+
+  def _peek(self) -> ASTNode:
+    # PEEK ID
+    self._eat(TokenType.PEEK)
+    token = self._id()
+    return ASTNode(ASTNodeType.PEEK, token)
+
+  def _poke(self) -> ASTNode:
+    # POKE ID, logic
+    self._eat(TokenType.POKE)
+    token = self._id()
+    self._eat(TokenType.COMMA)
+    return ASTNode(ASTNodeType.POKE, token, [self._logic()])
+
+  def _ref(self) -> ASTNode:
+    # REF ID
+    self._eat(TokenType.REF)
+    token = self._id()
+    return ASTNode(ASTNodeType.REF, token)
 
   # ========================================================================= #
   # Control flow                                                              #
@@ -340,14 +363,14 @@ class Parser:
   # Public methods                                                            #
   # ========================================================================= #
 
-  @property
+  @ property
   def cur_token(self) -> Token:
     """
     Get the current token.
     """
     return self._cur_token
 
-  @cur_token.setter
+  @ cur_token.setter
   def cur_token(self, value: Token):
     """
     Set the current token.

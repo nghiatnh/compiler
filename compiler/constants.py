@@ -56,11 +56,15 @@ class TokenType(Enum):
   REAL = "REAL"
   BOOLEAN = "BOOLEAN"
   STRING = "STRING"
+  POINTER = "POINTER"
   VOID = "VOID"
   BREAK = "BREAK"
   CONTINUE = "CONTINUE"
   TRUE = "TRUE"
   FALSE = "FALSE"
+  PEEK = "PEEK"
+  POKE = "POKE"
+  REF = "REF"
 
   # OTHERS
   ASSIGN = ":="
@@ -91,6 +95,7 @@ class ASTNodeType(Enum):
   RETURN = "RETURN"
 
   # Statements
+  MOV_PTR = "MOV_PTR"
   BINARY_OP = "BINARY_OP"
   UNARY_OP = "UNARY_OP"
   STATEMENTS = "STATEMENTS"
@@ -104,17 +109,24 @@ class ASTNodeType(Enum):
   CONTINUE = "CONTINUE"
   CONTROL_FLOW = "CONTROL_FLOW"
 
+  # Memory
+  PEEK = "PEEK"
+  POKE = "POKE"
+  REF = "REF"
+
 
 class ReturnType(Enum):
   INTEGER = "INTEGER"
   REAL = "REAL"
   BOOLEAN = "BOOLEAN"
   STRING = "STRING"
+  POINTER = "POINTER"
   VOID = "VOID"
 
 
 class OpCode(Enum):
   MOV = "MOV"
+  LEA = "LEA"
   GET_ENV = "GET_ENV"
   SET_ENV = "SET_ENV"
   SYSCALL = "SYSCALL"
@@ -126,6 +138,9 @@ class OpCode(Enum):
   JMPF = "JMPF"
   CALL = "CALL"
   RET = "RET"
+  PEEK = "PEEK"
+  POKE = "POKE"
+  REF = "REF"
 
 
 class BinaryOp(Enum):
@@ -199,10 +214,14 @@ KEYWORDS = {
     TokenType.REAL.value: TokenType.REAL,
     TokenType.BOOLEAN.value: TokenType.BOOLEAN,
     TokenType.STRING.value: TokenType.STRING,
+    TokenType.POINTER.value: TokenType.POINTER,
     TokenType.VOID.value: TokenType.VOID,
     TokenType.RETURN.value: TokenType.RETURN,
     TokenType.BREAK.value: TokenType.BREAK,
     TokenType.CONTINUE.value: TokenType.CONTINUE,
+    TokenType.PEEK.value: TokenType.PEEK,
+    TokenType.POKE.value: TokenType.POKE,
+    TokenType.REF.value: TokenType.REF,
 }
 
 

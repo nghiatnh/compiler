@@ -260,7 +260,7 @@ class SemanticAnalyzer:
   def _analyze_binary_op(self, node: ASTNode) -> ReturnType:
     left_type = self._analyze(node.children[0])
     right_type = self._analyze(node.children[1])
-    if left_type != right_type:
+    if left_type not in [ReturnType.POINTER, right_type]:
       raise self._error(
           ErrorType.TYPE_MISMATCH, node,
           f"Type mismatch {left_type.name} and {right_type.name}"
@@ -293,15 +293,24 @@ class SemanticAnalyzer:
       return ReturnType.BOOLEAN
 
     # Can not operate ADD on BOOLEAN type
-    if node.token.type == TokenType.PLUS and left_type == TokenType.BOOLEAN:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {left_type.name}"
-      )
+    if node.token.type in [TokenType.PLUS, TokenType.MINUS]:
+      if left_type == ReturnType.BOOLEAN:
+        raise self._error(
+            ErrorType.INVALID_OPERATION, node,
+            f"Invalid type {left_type.name}"
+        )
+      if left_type == ReturnType.POINTER:
+        # If pointer, it should be MOV_PTR instead of ADD/SUB
+        if right_type != ReturnType.INTEGER:
+          raise self._error(
+              ErrorType.TYPE_MISMATCH, node,
+              f"Type mismatch {ReturnType.INTEGER.name} and {right_type.name}"
+          )
+        node.type = ASTNodeType.MOV_PTR
 
     # Only operate DIV/MOD on INTEGER type
     if node.token.type in [TokenType.INTEGER_DIV, TokenType.INTEGER_MOD]:
-      if left_type != TokenType.INTEGER:
+      if left_type != ReturnType.INTEGER:
         raise self._error(
             ErrorType.INVALID_OPERATION, node,
             f"Invalid type {left_type.name}"
@@ -309,15 +318,15 @@ class SemanticAnalyzer:
 
     # Only operate DIVIDE on REAL type
     if node.token.type == TokenType.SLASH:
-      if left_type != TokenType.REAL:
+      if left_type != ReturnType.REAL:
         raise self._error(
             ErrorType.INVALID_OPERATION, node,
             f"Invalid type {left_type.name}"
         )
 
     # Only operate SUB/MUL on INTEGER and REAL types
-    if node.token.type == [TokenType.STAR, TokenType.MINUS]:
-      if left_type not in [TokenType.REAL, TokenType.INTEGER]:
+    if node.token.type in [TokenType.STAR, TokenType.MINUS]:
+      if left_type not in [ReturnType.REAL, ReturnType.INTEGER, ReturnType.POINTER]:
         raise self._error(
             ErrorType.INVALID_OPERATION, node,
             f"Invalid type {left_type.name}"
@@ -388,6 +397,39 @@ class SemanticAnalyzer:
         ErrorType.INVALID_OPERATION, node,
         f"Invalid value '{node.token.value}'"
     )
+
+  def _analyze_peek(self, node: ASTNode) -> ReturnType:
+    rtype = self._analyze_id(node)
+    if rtype != ReturnType.POINTER:
+      raise self._error(
+          ErrorType.INVALID_OPERATION, node,
+          f"Invalid type {rtype.name}"
+      )
+    return ReturnType.INTEGER
+
+  def _analyze_poke(self, node: ASTNode) -> ReturnType:
+    var_type = self._analyze_id(node)
+    if var_type != ReturnType.POINTER:
+      raise self._error(
+          ErrorType.INVALID_OPERATION, node,
+          f"Invalid type {var_type.name}"
+      )
+    rtype = self._analyze(node.children[0])
+    if rtype != ReturnType.POINTER:
+      raise self._error(
+          ErrorType.INVALID_OPERATION, node,
+          f"Invalid type {rtype.name}"
+      )
+    return ReturnType.VOID
+
+  def _analyze_ref(self, node: ASTNode) -> ReturnType:
+    var_type = self._analyze_id(node)
+    if var_type not in [ReturnType.INTEGER, ReturnType.STRING]:
+      raise self._error(
+          ErrorType.INVALID_OPERATION, node,
+          f"Invalid type {var_type.name}"
+      )
+    return ReturnType.POINTER
 
   # ========================================================================= #
   # Control flow                                                              #

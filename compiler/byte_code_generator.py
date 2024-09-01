@@ -193,6 +193,14 @@ class ByteCodeGenerator:
         OpCode.BINOP, [BinaryOp(node.token.type.value), lindex, rindex, dst])
     return dst
 
+  def _generate_mov_ptr(self, node: ASTNode) -> int:
+    lindex = self._generate(node.children[0])
+    rindex = self._generate(node.children[1])
+    dst = self._scope.new_var()
+    sign = 1 if node.token.type == TokenType.PLUS else -1
+    self._add_code(OpCode.LEA, [lindex, rindex, sign, dst])
+    return dst
+
   def _generate_unary_op(self, node: ASTNode) -> int:
     rindex = self._generate(node.children[0])
     # Only operate PLUS/MINUS on INTEGER and REAL type
@@ -228,6 +236,24 @@ class ByteCodeGenerator:
   def _generate_value(self, node: ASTNode) -> ReturnType:
     dst = self._scope.new_var()
     self._add_code(OpCode.CONST, [node.token.value, dst])
+    return dst
+
+  def _generate_peek(self, node: ASTNode) -> int:
+    rindex = self._generate_id(node)
+    dst = self._scope.new_var()
+    self._add_code(OpCode.PEEK, [rindex, dst])
+    return dst
+
+  def _generate_poke(self, node: ASTNode) -> int:
+    rindex = self._generate_id(node)
+    value_index = self._generate(node.children[0])
+    self._add_code(OpCode.POKE, [rindex, value_index])
+    return -1
+
+  def _generate_ref(self, node: ASTNode) -> int:
+    rindex = self._generate_id(node)
+    dst = self._scope.new_var()
+    self._add_code(OpCode.REF, [rindex, dst])
     return dst
 
   # ========================================================================= #

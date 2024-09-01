@@ -13,8 +13,8 @@
 ### Variables
 - **var_decl**: `VAR` (*declaration* `;`)+
 - **declaration**: *variable* (`,` *variable*)* `:` *var_type*
-- **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING`
-- **assign**: *variable* `:=` (*logic* | *syscall*)
+- **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING` | `POINTER`
+- **assign**: *variable* `:=` *logic*
 - **variable**: **ID**
 
 ### Functions
@@ -29,11 +29,11 @@
 
 ### Statements
 - **statements**: (*statement* `;`)* *statement*
-- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump* | *syscall*
+- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump* | *poke*
 - **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
 - **expr**: *term* ((`+` | `-`) *term*)*
 - **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*
-- **factor**: (`+` | `-` | `NOT`) *factor* | `(` *logic* `)` | *value* | *variable* | *call*
+- **factor**: (`+` | `-` | `NOT`) *factor* | `(` *logic* `)` | *value* | *variable* | *call* | *syscall* | *peek* | *ref*
 
 ### Control flow
 - **control_flow**: `IF` *logic* `THEN` *statement* (`ELSE` *statement*)?
@@ -48,6 +48,10 @@
 - **boolean**: `TRUE` | `FALSE`
 - **string**: `'` .*? `'`
 
+### Pointers
+- **peek**: `PEEK` *variable*
+- **poke**: `POKE` *variable*, *logic*
+- **ref**: `REF` *variable*
 
 # Built-in Functions
 
