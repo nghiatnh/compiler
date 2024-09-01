@@ -14,7 +14,7 @@
 - **var_decl**: `VAR` (*declaration* `;`)+
 - **declaration**: *variable* (`,` *variable*)* `:` *var_type*
 - **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING`
-- **assign**: *variable* `:=` *logic*
+- **assign**: *variable* `:=` (*logic* | *syscall*)
 - **variable**: **ID**
 
 ### Functions

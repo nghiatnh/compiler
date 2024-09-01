@@ -119,9 +119,11 @@ class Parser:
     raise self._error(ErrorType.INVALID_TYPE, token, f"Invalid type: {token.value}")
 
   def _assign(self) -> ASTNode:
-    # ID := logic
+    # ID := (logic | syscall)
     var_name = self._id()
     self._eat(TokenType.ASSIGN)
+    if self.cur_token.type == TokenType.SYSCALL:
+      return ASTNode(ASTNodeType.ASSIGN, var_name, [self._syscall()])
     return ASTNode(ASTNodeType.ASSIGN, var_name, [self._logic()])
 
   # ========================================================================= #
