@@ -105,8 +105,8 @@ BEGIN
   tmp := i * 1;
   WHILE tmp > 0 DO
   BEGIN
-    d := (tmp MOD 10) + 48;
-    tmp := tmp DIV 10;
+    d := (tmp % 10) + 48;
+    tmp := tmp / 10;
     strappend(s, d);
   END;
   return strrev(s);
@@ -123,7 +123,7 @@ BEGIN
   WHILE i <= strlen(s) - 1 DO
   BEGIN
     tmp := s + i;
-    result := result * 10 + (((PEEK tmp) MOD 256) - 48);
+    result := result * 10 + (((PEEK tmp) % 256) - 48);
     i := i + 1;
   END;
   RETURN result;

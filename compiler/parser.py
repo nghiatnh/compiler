@@ -111,10 +111,10 @@ class Parser:
     return node
 
   def _var_type(self) -> Token:
-    # INTEGER | REAL | BOOLEAN | STRING
+    # INTEGER | BOOLEAN | STRING
     token = self.cur_token
     if token.type in (
-        TokenType.INTEGER, TokenType.REAL, TokenType.BOOLEAN, TokenType.STRING, TokenType.POINTER,
+        TokenType.INTEGER, TokenType.BOOLEAN, TokenType.STRING, TokenType.POINTER,
     ):
       self._eat(token.type)
       return token
@@ -266,11 +266,10 @@ class Parser:
     return node
 
   def _term(self) -> ASTNode:
-    # factor ((* | / | DIV | MOD) factor)*
+    # factor ((* | / | %) factor)*
     node = self._factor()
     while self.cur_token.type in (
-        TokenType.STAR, TokenType.SLASH,
-        TokenType.INTEGER_DIV, TokenType.INTEGER_MOD,
+        TokenType.STAR, TokenType.SLASH, TokenType.PERCENT,
     ):
       operator = self.cur_token
       self._eat(operator.type)

@@ -64,14 +64,10 @@ class Lexer:
 
   def _number(self) -> int:
     cur = ""
-    is_real = False
-    while self.cur_char is not None and (self.cur_char.isdigit() or (
-            self.cur_char == TokenType.DOT.value and not is_real)):
-      if self.cur_char == TokenType.DOT.value:
-        is_real = True
+    while self.cur_char is not None and self.cur_char.isdigit():
       cur += self.cur_char
       self._move_next()
-    return float(cur) if is_real else int(cur)
+    return int(cur)
 
   def _string(self) -> str:
     cur = ""

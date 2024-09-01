@@ -202,14 +202,14 @@ class MachineCodeGenerator:
     if op in arith:
       # op rax, [rbx + a2 * 8]
       self._asm_disp(arith[op], Registers.A, Registers.B, a2 * 8)
-    if op in {BinaryOp.INTEGER_DIV, BinaryOp.INTEGER_MOD}:
+    if op in {BinaryOp.DIV, BinaryOp.MOD}:
       # xor edx, edx
       self.code.extend(b"\x31\xd2")
       # mov rcx, [rbx + a2 * 8]
       self._asm_load(Registers.C, Registers.B, a2 * 8)
       # idiv rcx
       self.code.extend(b"\x48\xf7\xf9")
-      if op == BinaryOp.INTEGER_MOD:
+      if op == BinaryOp.MOD:
         # mov rax, rdx
         self.code.extend(b"\x48\x89\xd0")
     cmp = {

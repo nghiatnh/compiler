@@ -23,8 +23,7 @@ class TokenType(Enum):
   MINUS = "-"
   STAR = "*"
   SLASH = "/"
-  INTEGER_DIV = "DIV"
-  INTEGER_MOD = "MOD"
+  PERCENT = "%"
 
   # Comparison operators
   EQ = "="
@@ -53,7 +52,6 @@ class TokenType(Enum):
   FUNCTION = "FUNCTION"
   SYSCALL = "SYSCALL"
   INTEGER = "INTEGER"
-  REAL = "REAL"
   BOOLEAN = "BOOLEAN"
   STRING = "STRING"
   POINTER = "POINTER"
@@ -119,7 +117,6 @@ class ASTNodeType(Enum):
 
 class ReturnType(Enum):
   INTEGER = "INTEGER"
-  REAL = "REAL"
   BOOLEAN = "BOOLEAN"
   STRING = "STRING"
   POINTER = "POINTER"
@@ -150,8 +147,7 @@ class BinaryOp(Enum):
   SUB = "-"
   MUL = "*"
   DIV = "/"
-  INTEGER_DIV = "DIV"
-  INTEGER_MOD = "MOD"
+  MOD = "%"
   EQ = "="
   NE = "<>"
   LT = "<"
@@ -183,6 +179,7 @@ OPERATORS1CHAR = {
     TokenType.MINUS.value: TokenType.MINUS,
     TokenType.STAR.value: TokenType.STAR,
     TokenType.SLASH.value: TokenType.SLASH,
+    TokenType.PERCENT.value: TokenType.PERCENT,
     TokenType.EQ.value: TokenType.EQ,
     TokenType.LT.value: TokenType.LT,
     TokenType.GT.value: TokenType.GT,
@@ -208,12 +205,9 @@ KEYWORDS = {
     TokenType.AND.value: TokenType.AND,
     TokenType.OR.value: TokenType.OR,
     TokenType.NOT.value: TokenType.NOT,
-    TokenType.INTEGER_DIV.value: TokenType.INTEGER_DIV,
-    TokenType.INTEGER_MOD.value: TokenType.INTEGER_MOD,
     TokenType.FUNCTION.value: TokenType.FUNCTION,
     TokenType.SYSCALL.value: TokenType.SYSCALL,
     TokenType.INTEGER.value: TokenType.INTEGER,
-    TokenType.REAL.value: TokenType.REAL,
     TokenType.BOOLEAN.value: TokenType.BOOLEAN,
     TokenType.STRING.value: TokenType.STRING,
     TokenType.POINTER.value: TokenType.POINTER,

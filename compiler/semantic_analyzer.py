@@ -285,16 +285,16 @@ class SemanticAnalyzer:
         TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.LE,
         TokenType.GT, TokenType.GE
     ):
-      if left_type == TokenType.BOOLEAN:
+      if left_type == ReturnType.BOOLEAN:
         raise self._error(
             ErrorType.INVALID_OPERATION, node,
             f"Invalid type {left_type.name}"
         )
       return ReturnType.BOOLEAN
 
-    # Can not operate ADD on BOOLEAN type
+    # Only operate PLUS/MINUS on INTEGER and POINTER type
     if node.token.type in [TokenType.PLUS, TokenType.MINUS]:
-      if left_type == ReturnType.BOOLEAN:
+      if left_type not in [ReturnType.INTEGER, ReturnType.POINTER]:
         raise self._error(
             ErrorType.INVALID_OPERATION, node,
             f"Invalid type {left_type.name}"
@@ -308,29 +308,14 @@ class SemanticAnalyzer:
           )
         node.type = ASTNodeType.MOV_PTR
 
-    # Only operate DIV/MOD on INTEGER type
-    if node.token.type in [TokenType.INTEGER_DIV, TokenType.INTEGER_MOD]:
+    # Only operate DIV/MOD/MUL on INTEGER type
+    if node.token.type in [TokenType.SLASH, TokenType.PERCENT, TokenType.STAR]:
       if left_type != ReturnType.INTEGER:
         raise self._error(
             ErrorType.INVALID_OPERATION, node,
             f"Invalid type {left_type.name}"
         )
 
-    # Only operate DIVIDE on REAL type
-    if node.token.type == TokenType.SLASH:
-      if left_type != ReturnType.REAL:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {left_type.name}"
-        )
-
-    # Only operate SUB/MUL on INTEGER and REAL types
-    if node.token.type in [TokenType.STAR, TokenType.MINUS]:
-      if left_type not in [ReturnType.REAL, ReturnType.INTEGER, ReturnType.POINTER]:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {left_type.name}"
-        )
     return left_type
 
   def _analyze_unary_op(self, node: ASTNode) -> ReturnType:
@@ -350,8 +335,8 @@ class SemanticAnalyzer:
         )
       return ReturnType.BOOLEAN
 
-    # Only operate PLUS/MINUS on INTEGER and REAL type
-    if return_type not in [ReturnType.REAL, ReturnType.INTEGER]:
+    # Only operate PLUS/MINUS on INTEGER type
+    if return_type != ReturnType.INTEGER:
       raise self._error(
           ErrorType.INVALID_OPERATION, node,
           f"Invalid type {return_type.name}"
@@ -385,8 +370,6 @@ class SemanticAnalyzer:
     return var_symbol.type
 
   def _analyze_value(self, node: ASTNode) -> ReturnType:
-    if isinstance(node.token.value, float):
-      return ReturnType.REAL
     if isinstance(node.token.value, bool):
       return ReturnType.BOOLEAN
     if isinstance(node.token.value, int):
@@ -399,11 +382,11 @@ class SemanticAnalyzer:
     )
 
   def _analyze_peek(self, node: ASTNode) -> ReturnType:
-    rtype = self._analyze_id(node)
-    if rtype != ReturnType.POINTER:
+    return_type = self._analyze_id(node)
+    if return_type != ReturnType.POINTER:
       raise self._error(
           ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {rtype.name}"
+          f"Invalid type {return_type.name}"
       )
     return ReturnType.INTEGER
 
@@ -426,7 +409,25 @@ class SemanticAnalyzer:
     return ReturnType.POINTER
 
   def _analyze_cast(self, node: ASTNode) -> ReturnType:
-    return ReturnType(node.token.type.value)
+    return_type = self._analyze(node.children[0])
+    cast_type = ReturnType(node.token.type.value)
+    if return_type == ReturnType.VOID:
+      raise self._error(
+          ErrorType.INVALID_OPERATION, node,
+          "Invalid type VOID"
+      )
+    allowed_casts = {
+        ReturnType.INTEGER: [ReturnType.INTEGER, ReturnType.POINTER],
+        ReturnType.BOOLEAN: [ReturnType.BOOLEAN],
+        ReturnType.STRING: [ReturnType.STRING, ReturnType.POINTER],
+        ReturnType.POINTER: [ReturnType.INTEGER, ReturnType.POINTER],
+    }
+    if cast_type not in allowed_casts[return_type]:
+      raise self._error(
+          ErrorType.INVALID_OPERATION, node,
+          f"Invalid cast from {return_type.name} to {cast_type.name}"
+      )
+    return cast_type
 
   # ========================================================================= #
   # Control flow                                                              #

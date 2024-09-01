@@ -16,7 +16,7 @@
 ### Variables
 - **var_decl**: (`VAR` (*declaration* `;`)+)+
 - **declaration**: *variable* (`,` *variable*)* `:` *var_type*
-- **var_type**: `INTEGER` | `REAL` | `BOOLEAN` | `STRING` | `POINTER`
+- **var_type**: `INTEGER` | `BOOLEAN` | `STRING` | `POINTER`
 - **assign**: *variable* `:=` *logic*
 - **variable**: **ID**
 

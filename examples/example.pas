@@ -11,7 +11,7 @@ BEGIN
 END;
 
 BEGIN
-  syscall(1, 1, 'Enter a number: ', 16);
+  write((CAST POINTER, 'Enter a number: '), 16);
   heap := CAST POINTER, 0;
   str := input(10);
   syscall(1, 1, 'The ', 4);

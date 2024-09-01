@@ -203,7 +203,6 @@ class ByteCodeGenerator:
 
   def _generate_unary_op(self, node: ASTNode) -> int:
     rindex = self._generate(node.children[0])
-    # Only operate PLUS/MINUS on INTEGER and REAL type
     dst = self._scope.new_var()
     if node.token.type == TokenType.MINUS:
       self._add_code(OpCode.NEG, [rindex, dst])
