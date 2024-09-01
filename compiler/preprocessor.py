@@ -3,19 +3,19 @@ import re
 from compiler.builtin_code import BUILT_IN_CODES
 
 
-class MacroCompilerError(Exception):
+class PreprocessorError(Exception):
   """
-  MacroCompilerError
+  PreprocessorError
   ==================
-  MacroCompilerError is raised when an error occurs during the macro compilation process.
+  PreprocessorError is raised when an error occurs during the macro compilation process.
   """
 
 
-class MacroCompiler:
+class Preprocessor:
   """
-  MacroCompiler
+  Preprocessor
   =============
-  MacroCompiler is a class that represents a compiler for macros.
+  Preprocessor is a class that represents a compiler for macros.
   """
 
   def compile(self, text: str) -> str:
@@ -27,7 +27,7 @@ class MacroCompiler:
     for match in re.finditer(r"{\s+INCLUDE\s+(\w+)\s+}", text, re.IGNORECASE):
       name = match.groups()[0].upper()
       if name not in BUILT_IN_CODES:
-        raise MacroCompilerError("Invalid include name")
+        raise PreprocessorError("Invalid include name")
       changes[match.span()] = name
       used_codes[name] = "\n".join(BUILT_IN_CODES[name])
     new_text = ""

@@ -2,7 +2,7 @@ import sys
 
 from compiler.logger import LOGGER
 from compiler.error_reporter import ErrorReporter, CompileError
-from compiler.precompile import MacroCompiler
+from compiler.preprocessor import Preprocessor
 from compiler.lexer import Lexer
 from compiler.parser import Parser
 from compiler.semantic_analyzer import SemanticAnalyzer
@@ -24,9 +24,8 @@ class Compiler:
     """
     Compile the given source code to machine code.
     """
-    LOGGER.info("Macro compiling code")
-    mc = MacroCompiler()
-    text = mc.compile(text)
+    LOGGER.info("Preprocessing code")
+    text = Preprocessor().compile(text)
     error_reporter = ErrorReporter(text)
     try:
       LOGGER.info("Parsing code")
