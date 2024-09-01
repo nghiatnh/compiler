@@ -24,7 +24,7 @@ END;
 """
 
 BUILT_IN_CODES = [
-    WRITE,
-    INPUT,
+    # WRITE,
+    # INPUT,
     EXIT,
 ]

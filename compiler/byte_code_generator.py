@@ -256,6 +256,9 @@ class ByteCodeGenerator:
     self._add_code(OpCode.REF, [rindex, dst])
     return dst
 
+  def _generate_cast(self, node: ASTNode) -> int:
+    return self._generate(node.children[0])
+
   # ========================================================================= #
   # Control flow                                                              #
   # ========================================================================= #

@@ -33,7 +33,7 @@
 - **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
 - **expr**: *term* ((`+` | `-`) *term*)*
 - **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*
-- **factor**: (`+` | `-` | `NOT`) *factor* | `(` *logic* `)` | *value* | *variable* | *call* | *syscall* | *peek* | *ref*
+- **factor**: (`+` | `-` | `NOT`) *factor* | `(` *logic* `)` | *value* | *variable* | *call* | *syscall* | *peek* | *ref* | *cast*
 
 ### Control flow
 - **control_flow**: `IF` *logic* `THEN` *statement* (`ELSE` *statement*)?

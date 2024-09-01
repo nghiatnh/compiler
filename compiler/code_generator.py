@@ -228,6 +228,12 @@ class MachineCodeGenerator:
       self.code.extend(b"\x0f\xb6\xc0")
     self._store_rax(dst)
 
+  def _neg_(self, src: int, dst: int):
+    self._asm_load(Registers.A, Registers.B, src * 8)
+    # neg rax
+    self.code.extend(b"\x48\xf7\xd8")
+    self._asm_store(Registers.B, dst * 8, Registers.A)
+
   def _jmp_(self, label: int):
     self.code.extend(b"\xe9")  # jmp
     self.jmps.setdefault(label, []).append(len(self.code))

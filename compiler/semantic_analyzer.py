@@ -431,6 +431,9 @@ class SemanticAnalyzer:
       )
     return ReturnType.POINTER
 
+  def _analyze_cast(self, node: ASTNode) -> ReturnType:
+    return ReturnType(node.token.type.value)
+
   # ========================================================================= #
   # Control flow                                                              #
   # ========================================================================= #

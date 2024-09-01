@@ -276,8 +276,12 @@ class Parser:
     return node
 
   def _factor(self) -> ASTNode:
-    # (+ | - | NOT) | value | ID | call | ( logic ) | syscall | peek | ref
+    # (+ | - | NOT) | value | ID | call | ( logic ) | syscall | peek | ref | cast
     token = self.cur_token
+    if token.type == TokenType.SYSCALL:
+      return self._syscall()
+    if token.type == TokenType.CAST:
+      return self._cast()
     if token.type == TokenType.PEEK:
       return self._peek()
     if token.type == TokenType.REF:
@@ -319,6 +323,13 @@ class Parser:
     self._eat(TokenType.REF)
     token = self._id()
     return ASTNode(ASTNodeType.REF, token)
+
+  def _cast(self) -> ASTNode:
+    # CAST var_type, logic
+    self._eat(TokenType.CAST)
+    var_type = self._var_type()
+    self._eat(TokenType.COMMA)
+    return ASTNode(ASTNodeType.CAST, var_type, [self._logic()])
 
   # ========================================================================= #
   # Control flow                                                              #

@@ -65,6 +65,7 @@ class TokenType(Enum):
   PEEK = "PEEK"
   POKE = "POKE"
   REF = "REF"
+  CAST = "CAST"
 
   # OTHERS
   ASSIGN = ":="
@@ -113,6 +114,7 @@ class ASTNodeType(Enum):
   PEEK = "PEEK"
   POKE = "POKE"
   REF = "REF"
+  CAST = "CAST"
 
 
 class ReturnType(Enum):
@@ -222,6 +224,7 @@ KEYWORDS = {
     TokenType.PEEK.value: TokenType.PEEK,
     TokenType.POKE.value: TokenType.POKE,
     TokenType.REF.value: TokenType.REF,
+    TokenType.CAST.value: TokenType.CAST,
 }
 
 
