@@ -52,9 +52,10 @@
 - **string**: `'` .*? `'`
 
 ### Pointers
-- **peek**: `PEEK` *variable*
-- **poke**: `POKE` *variable*, *logic*
-- **ref**: `REF` *variable*
+- **peek**: `^` *logic*
+- **poke**: `^` *logic* `:=` *logic*
+- **ref**: `@` *logic*
+- **cast**: `CAST` *logic* `TO` *var_type*
 
 # Built-in Functions
 

@@ -223,7 +223,7 @@ class Parser:
     # body | assign | call | control_flow | loop | jump | poke
     if self.cur_token.type == TokenType.BEGIN:
       return self._body()
-    if self.cur_token.type == TokenType.POKE:
+    if self.cur_token.type == TokenType.CARET:
       return self._poke()
     if self.cur_token.type == TokenType.SYSCALL:
       return self._syscall()
@@ -283,9 +283,9 @@ class Parser:
       return self._syscall()
     if token.type == TokenType.CAST:
       return self._cast()
-    if token.type == TokenType.PEEK:
+    if token.type == TokenType.CARET:
       return self._peek()
-    if token.type == TokenType.REF:
+    if token.type == TokenType.AT:
       return self._ref()
     if token.type in [TokenType.PLUS, TokenType.MINUS, TokenType.NOT]:
       self._eat(token.type)
@@ -306,31 +306,37 @@ class Parser:
         ErrorType.UNEXPECTED_TOKEN, self.cur_token, f"Unexpected token: {token.type.value}"
     )
 
+  # ========================================================================= #
+  # Pointers                                                                  #
+  # ========================================================================= #
+
   def _peek(self) -> ASTNode:
-    # PEEK ID
-    self._eat(TokenType.PEEK)
-    token = self._id()
-    return ASTNode(ASTNodeType.PEEK, token)
+    # ^ logic
+    token = self.cur_token
+    self._eat(TokenType.CARET)
+    return ASTNode(ASTNodeType.PEEK, token, [self._logic()])
 
   def _poke(self) -> ASTNode:
-    # POKE ID, logic
-    self._eat(TokenType.POKE)
-    token = self._id()
-    self._eat(TokenType.COMMA)
-    return ASTNode(ASTNodeType.POKE, token, [self._logic()])
+    # ^ logic := logic
+    token = self.cur_token
+    self._eat(TokenType.CARET)
+    ptr = self._logic()
+    self._eat(TokenType.ASSIGN)
+    return ASTNode(ASTNodeType.POKE, token, [ptr, self._logic()])
 
   def _ref(self) -> ASTNode:
-    # REF ID
-    self._eat(TokenType.REF)
-    token = self._id()
-    return ASTNode(ASTNodeType.REF, token)
+    # @ logic
+    token = self.cur_token
+    self._eat(TokenType.AT)
+    return ASTNode(ASTNodeType.REF, token, [self._logic()])
 
   def _cast(self) -> ASTNode:
-    # CAST var_type, logic
+    # CAST logic TO var_type
     self._eat(TokenType.CAST)
+    logic = self._logic()
+    self._eat(TokenType.TO)
     var_type = self._var_type()
-    self._eat(TokenType.COMMA)
-    return ASTNode(ASTNodeType.CAST, var_type, [self._logic()])
+    return ASTNode(ASTNodeType.CAST, var_type, [logic])
 
   # ========================================================================= #
   # Control flow                                                              #

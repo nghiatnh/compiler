@@ -1,5 +1,5 @@
 PROGRAM fibonacci;
-VAR heap, str: POINTER;
+VAR heap, str, ref: POINTER;
 s: STRING;
 
 { INCLUDE IOLIBS }
@@ -11,13 +11,15 @@ BEGIN
 END;
 
 BEGIN
-  write((CAST POINTER, 'Enter a number: '), 16);
-  heap := CAST POINTER, 0;
+  writestr('Enter a number: ', 16);
+  heap := CAST 0 TO POINTER;
   str := input(10);
-  syscall(1, 1, 'The ', 4);
-  write(str, strlen(str));
-  syscall(1, 1, 'th fibonacci is: ', 17);
-  str := itoa(fib(atoi(str)));
+  ref := @atoi(str);
+  ^ref := (^ref) + 1;
+  writestr('The ', 4);
+  write(itoa(^ref), strlen(itoa(^ref)));
+  writestr('th fibonacci is: ', 17);
+  str := itoa(fib(^ref));
   writeln(str, strlen(str));
   exit(0);
 END.

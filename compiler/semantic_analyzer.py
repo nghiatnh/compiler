@@ -381,8 +381,12 @@ class SemanticAnalyzer:
         f"Invalid value '{node.token.value}'"
     )
 
+  # ========================================================================= #
+  # Pointers                                                                  #
+  # ========================================================================= #
+
   def _analyze_peek(self, node: ASTNode) -> ReturnType:
-    return_type = self._analyze_id(node)
+    return_type = self._analyze(node.children[0])
     if return_type != ReturnType.POINTER:
       raise self._error(
           ErrorType.INVALID_OPERATION, node,
@@ -391,16 +395,22 @@ class SemanticAnalyzer:
     return ReturnType.INTEGER
 
   def _analyze_poke(self, node: ASTNode) -> ReturnType:
-    var_type = self._analyze_id(node)
+    var_type = self._analyze(node.children[0])
     if var_type != ReturnType.POINTER:
       raise self._error(
           ErrorType.INVALID_OPERATION, node,
           f"Invalid type {var_type.name}"
       )
+    return_type = self._analyze(node.children[1])
+    if return_type != ReturnType.INTEGER:
+      raise self._error(
+          ErrorType.TYPE_MISMATCH, node,
+          f"Type mismatch {ReturnType.INTEGER.name} and {return_type.name}"
+      )
     return ReturnType.VOID
 
   def _analyze_ref(self, node: ASTNode) -> ReturnType:
-    var_type = self._analyze_id(node)
+    var_type = self._analyze(node.children[0])
     if var_type not in [ReturnType.INTEGER, ReturnType.STRING]:
       raise self._error(
           ErrorType.INVALID_OPERATION, node,

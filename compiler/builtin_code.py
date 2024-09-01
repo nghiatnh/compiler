@@ -18,7 +18,7 @@ FUNCTION malloc(n: INTEGER): POINTER;
 VAR heapsz, prot, flags, fd, offset, tmp: INTEGER;
 result: POINTER;
 BEGIN
-  IF BuiltInHeap = (CAST POINTER, 0) THEN
+  IF BuiltInHeap = (CAST 0 TO POINTER) THEN
   BEGIN
     heapsz := 255;
     prot := 3;
@@ -26,7 +26,7 @@ BEGIN
     fd := -1;
     offset := 0;
     tmp := SYSCALL(9, 0, heapsz, prot, flags, fd, offset);
-    BuiltInHeap := CAST POINTER, tmp;
+    BuiltInHeap := CAST tmp TO POINTER;
   END;
   result := BuiltInHeap;
   BuiltInHeap := BuiltInHeap + n;
@@ -43,53 +43,46 @@ FUNCTION strnew(cap: INTEGER): POINTER;
 VAR addr, iaddr: POINTER;
 BEGIN
   addr := malloc(cap + 16);
-  POKE addr, 0;
-  addr := addr + 8;
-  POKE addr, cap;
-  RETURN addr + 8;
+  ^addr := 0;
+  ^(addr + 8) := cap;
+  RETURN addr + 16;
 END;
 """
 
 STRLEN = """
 FUNCTION strlen(s: POINTER): INTEGER;
 BEGIN
-  s := s - 16;
-  RETURN PEEK s;
+  RETURN ^(s - 16);
 END;
 """
 
 STRCAP = """
 FUNCTION strcap(s: POINTER): INTEGER;
 BEGIN
-  s := s - 8;
-  RETURN PEEK s;
+  RETURN ^(s - 8);
 END;
 """
 
 APPEND = """
 FUNCTION strappend(s: POINTER; ch: INTEGER): POINTER;
 VAR len: INTEGER;
-start: POINTER;
 BEGIN
   len := strlen(s);
-  start := s + len;
-  POKE start, ch;
-  s := s - 16;
-  POKE s, len + 1;
-  RETURN s + 16;
+  ^(s + len) := ch;
+  ^(s - 16) := len + 1;
+  RETURN s;
 END;
 """
 
 STRREV = """
 FUNCTION strrev(s: POINTER): POINTER;
-VAR r, tmp: POINTER; i: INTEGER;
+VAR r: POINTER; i: INTEGER;
 BEGIN
   r := strnew(strlen(s));
   i := strlen(s) - 1;
   WHILE i >= 0 DO
   BEGIN
-    tmp := s + i;
-    strappend(r, PEEK tmp);
+    strappend(r, ^(s + i));
     i := i - 1;
   END;
   RETURN r;
@@ -98,15 +91,14 @@ END;
 
 ITOA = """
 FUNCTION itoa(i: INTEGER): POINTER;
-VAR s: POINTER; d, tmp, l, tmp1: INTEGER;
+VAR s: POINTER; d: INTEGER;
 BEGIN
   s := strnew(24);
   IF i = 0 THEN strappend(s, 48);
-  tmp := i * 1;
-  WHILE tmp > 0 DO
+  WHILE i > 0 DO
   BEGIN
-    d := (tmp % 10) + 48;
-    tmp := tmp / 10;
+    d := (i % 10) + 48;
+    i := i / 10;
     strappend(s, d);
   END;
   return strrev(s);
@@ -116,14 +108,12 @@ END;
 ATOI = """
 FUNCTION atoi(s: POINTER): INTEGER;
 VAR result, i: INTEGER;
-tmp: POINTER;
 BEGIN
   result := 0;
   i := 0;
   WHILE i <= strlen(s) - 1 DO
   BEGIN
-    tmp := s + i;
-    result := result * 10 + (((PEEK tmp) % 256) - 48);
+    result := result * 10 + (^(s + i)) % 256 - 48;
     i := i + 1;
   END;
   RETURN result;
@@ -154,7 +144,7 @@ END;
 WRITE_STR = """
 FUNCTION writestr(s: STRING; len: INTEGER): VOID;
 BEGIN
-  SYSCALL(1, 1, s, len);
+  write(CAST s TO POINTER, len);
 END;
 """
 
@@ -162,10 +152,10 @@ WRITELN_STR = """
 FUNCTION writelnstr(s: STRING; len: INTEGER): VOID;
 VAR tmp: POINTER;
 BEGIN
-  SYSCALL(1, 1, s, len);
+  writeln(CAST s TO POINTER, len);
   tmp := strnew(1);
-  strappend(s, 10);
-  SYSCALL(1, 1, s, 1);
+  strappend(tmp, 10);
+  write(tmp, 1);
 END;
 """
 
@@ -179,7 +169,7 @@ BEGIN
   i := 0;
   WHILE i < nread - 1 DO
   BEGIN
-    strappend(result, PEEK tmp);
+    strappend(result, ^tmp);
     tmp := tmp + 1;
     i := i + 1;
   END;
@@ -193,7 +183,7 @@ END;
 
 STDLIBS = [VAR_DECL, EXIT, MALLOC]
 STRLIBS = [*STDLIBS, STRNEW, STRLEN, STRCAP, APPEND, STRREV, ITOA, ATOI]
-IOLIBS = [*STRLIBS, WRITE, WRITELN, INPUT]
+IOLIBS = [*STRLIBS, WRITE, WRITELN, WRITE_STR, WRITELN_STR, INPUT]
 
 BUILT_IN_CODES = {
     "STDLIBS": STDLIBS,

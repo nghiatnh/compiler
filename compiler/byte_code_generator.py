@@ -237,20 +237,24 @@ class ByteCodeGenerator:
     self._add_code(OpCode.CONST, [node.token.value, dst])
     return dst
 
+  # ========================================================================= #
+  # Pointers                                                                  #
+  # ========================================================================= #
+
   def _generate_peek(self, node: ASTNode) -> int:
-    rindex = self._generate_id(node)
+    rindex = self._generate(node.children[0])
     dst = self._scope.new_var()
     self._add_code(OpCode.PEEK, [rindex, dst])
     return dst
 
   def _generate_poke(self, node: ASTNode) -> int:
-    rindex = self._generate_id(node)
-    value_index = self._generate(node.children[0])
+    rindex = self._generate(node.children[0])
+    value_index = self._generate(node.children[1])
     self._add_code(OpCode.POKE, [rindex, value_index])
     return -1
 
   def _generate_ref(self, node: ASTNode) -> int:
-    rindex = self._generate_id(node)
+    rindex = self._generate(node.children[0])
     dst = self._scope.new_var()
     self._add_code(OpCode.REF, [rindex, dst])
     return dst

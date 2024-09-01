@@ -17,6 +17,8 @@ class TokenType(Enum):
   COLON = ":"
   DOT = "."
   SINGLE_QUOTE = "'"
+  CARET = "^"
+  AT = "@"
 
   # Binary operators
   PLUS = "+"
@@ -60,10 +62,8 @@ class TokenType(Enum):
   CONTINUE = "CONTINUE"
   TRUE = "TRUE"
   FALSE = "FALSE"
-  PEEK = "PEEK"
-  POKE = "POKE"
-  REF = "REF"
   CAST = "CAST"
+  TO = "TO"
 
   # OTHERS
   ASSIGN = ":="
@@ -172,6 +172,8 @@ PUNCTUATIONS = {
     TokenType.COLON.value: TokenType.COLON,
     TokenType.DOT.value: TokenType.DOT,
     TokenType.SINGLE_QUOTE.value: TokenType.SINGLE_QUOTE,
+    TokenType.CARET.value: TokenType.CARET,
+    TokenType.AT.value: TokenType.AT,
 }
 
 OPERATORS1CHAR = {
@@ -215,10 +217,8 @@ KEYWORDS = {
     TokenType.RETURN.value: TokenType.RETURN,
     TokenType.BREAK.value: TokenType.BREAK,
     TokenType.CONTINUE.value: TokenType.CONTINUE,
-    TokenType.PEEK.value: TokenType.PEEK,
-    TokenType.POKE.value: TokenType.POKE,
-    TokenType.REF.value: TokenType.REF,
     TokenType.CAST.value: TokenType.CAST,
+    TokenType.TO.value: TokenType.TO,
 }
 
 
