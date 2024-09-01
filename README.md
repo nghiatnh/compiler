@@ -7,5 +7,4 @@ I am building a simple compiler from scratch to understand how compilers work. T
 ```bash
 python3 -m compiler <filename>
 ./main.elf
-echo $?
 ```

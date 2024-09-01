@@ -414,12 +414,6 @@ class SemanticAnalyzer:
           ErrorType.INVALID_OPERATION, node,
           f"Invalid type {var_type.name}"
       )
-    rtype = self._analyze(node.children[0])
-    if rtype != ReturnType.POINTER:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {rtype.name}"
-      )
     return ReturnType.VOID
 
   def _analyze_ref(self, node: ASTNode) -> ReturnType:

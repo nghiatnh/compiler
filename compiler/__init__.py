@@ -31,7 +31,7 @@ def compile_code(text: str) -> bytes:
     parser = Parser(lexer, error_reporter)
     root = parser.parse()
     for code in BUILT_IN_CODES:
-      root.children[0].children.insert(1, _parse_built_in(code))
+      root.children[0].children.insert(-1, _parse_built_in(code))
     LOGGER.info("Compiling code")
     sa = SemanticAnalyzer(error_reporter)
     scope = sa.analyze(root)

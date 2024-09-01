@@ -1,21 +1,21 @@
-PROGRAM FIBONACCI;
-VAR n: INTEGER;
+PROGRAM fibonacci;
+VAR heap, str: POINTER;
+s: STRING;
 
-FUNCTION fib(n: INTEGER): INTEGER;
-VAR f1, f2, result, i: INTEGER;
+FUNCTION fib(n: integer): integer;
 BEGIN
   IF n <= 2 THEN RETURN 1;
-  i := 3;
-  WHILE i <= n DO
-  BEGIN
-    result := f1 + f2;
-    f1 := f2;
-    f2 := result;
-    i := i + 1;
-  END;
-  RETURN result;
+  RETURN fib(n - 1) + fib(n - 2);
 END;
 
 BEGIN
-  n := fib(5);
+  syscall(1, 1, 'Enter a number: ', 16);
+  heap := CAST POINTER, 0;
+  str := input(10);
+  syscall(1, 1, 'The ', 4);
+  write(str, strlen(str));
+  syscall(1, 1, 'th fibonacci is: ', 17);
+  str := itoa(fib(atoi(str)));
+  writeln(str, strlen(str));
+  exit(0);
 END.

@@ -205,9 +205,10 @@ class MachineCodeGenerator:
     if op in {BinaryOp.INTEGER_DIV, BinaryOp.INTEGER_MOD}:
       # xor edx, edx
       self.code.extend(b"\x31\xd2")
-      # idiv rax, [rbx + a2 * 8]
-      self.code.extend(b"\x48\xf7\xbb")
-      self._i32(a2 * 8)
+      # mov rcx, [rbx + a2 * 8]
+      self._asm_load(Registers.C, Registers.B, a2 * 8)
+      # idiv rcx
+      self.code.extend(b"\x48\xf7\xf9")
       if op == BinaryOp.INTEGER_MOD:
         # mov rax, rdx
         self.code.extend(b"\x48\x89\xd0")
@@ -310,10 +311,12 @@ class MachineCodeGenerator:
     self._store_rax(dst)
 
   def _poke_(self, ptr: int, src: int):
-    # mov rdx, [rbx + src * 8]
-    self._asm_load(Registers.D, Registers.B, src * 8)
-    # mov [rbx + ptr * 8], rdx
-    self._asm_store(Registers.B, ptr * 8, Registers.D)
+    # mov rax, [rbx + src * 8]
+    self._asm_load(Registers.A, Registers.B, src * 8)
+    # mov rdx, [rbx + ptr * 8]
+    self._asm_load(Registers.D, Registers.B, ptr * 8)
+    # mov [rdx], rax
+    self._asm_store(Registers.D, 0, Registers.A)
 
   def _ref_(self, ptr: int, dst: int):
     # lea rax, [rbx + ptr * 8]
@@ -321,16 +324,16 @@ class MachineCodeGenerator:
     self.code.extend(struct.pack("<i", ptr * 8))
     self._store_rax(dst)
 
-  def _lea_(self, src: int, offset: int, sign: int, dst: int):
+  def _lea_(self, src: int, offset_index: int, sign: int, dst: int):
     # mov rdx, [rbx + src * 8]
     self._asm_load(Registers.D, Registers.B, src * 8)
-    # mov rax, [rbx + offset * 8]
-    self._asm_load(Registers.A, Registers.B, offset * 8)
+    # mov rax, [rbx + offset_index * 8]
+    self._asm_load(Registers.A, Registers.B, offset_index * 8)
     if sign < 0:
       # neg rax
       self.code.extend(b"\x48\xf7\xd8")
-    # lea rax, [rdx + rax * 8]
-    self.code.extend(b"\x48\x8d\x04\xc2")
+    # lea rax, [rdx + rax]
+    self.code.extend(b"\x48\x8d\x04\x02")
     self._store_rax(dst)
 
   # ========================================================================= #
