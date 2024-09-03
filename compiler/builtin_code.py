@@ -20,9 +20,9 @@ result: POINTER;
 BEGIN
   IF BuiltInHeap = (CAST 0 TO POINTER) THEN
   BEGIN
-    heapsz := 255;
-    prot := 3;
-    flags := 34;
+    heapsz := 1048576; { 1MB }
+    prot := 3; { PROT_READ | PROT_WRITE }
+    flags := 34; { MAP_PRIVATE | MAP_ANONYMOUS }
     fd := -1;
     offset := 0;
     tmp := SYSCALL(9, 0, heapsz, prot, flags, fd, offset);

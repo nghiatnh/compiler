@@ -33,6 +33,11 @@ class Parser:
           ErrorType.EXPECT_TOKEN, self._cur_token, f"Expect {token_type.value}"
       )
 
+  def _id_token(self) -> Token:
+    id_ = self.cur_token
+    self._eat(TokenType.ID)
+    return id_
+
   # ========================================================================= #
   # Parser methods                                                            #
   # ========================================================================= #
@@ -44,7 +49,7 @@ class Parser:
   def _program(self) -> ASTNode:
     # PROGRAM ID ; block .
     self._eat(TokenType.PROGRAM)
-    program_name = self._id()
+    program_name = self._id_token()
     self._eat(TokenType.SEMICOLON)
     node = ASTNode(ASTNodeType.PROGRAM, program_name, [self._block()])
     self._eat(TokenType.DOT)
@@ -71,11 +76,10 @@ class Parser:
     self._eat(TokenType.END)
     return ASTNode(ASTNodeType.STATEMENTS, token, statements)
 
-  def _id(self) -> Token:
-    # ID
-    id_ = self.cur_token
-    self._eat(TokenType.ID)
-    return id_
+  def _id(self) -> ASTNode:
+    if self._lexer.cur_char == TokenType.LEFT_PAREN.value:
+      return self._call()
+    return ASTNode(ASTNodeType.ID, self._id_token())
 
   # ========================================================================= #
   # Variables                                                                 #
@@ -96,10 +100,10 @@ class Parser:
 
   def _declaration(self) -> ASTNode:
     # ID (, ID)* : var_type
-    declarations = [ASTNode(ASTNodeType.ID, self._id())]
+    declarations = [ASTNode(ASTNodeType.ID, self._id_token())]
     while self.cur_token.type == TokenType.COMMA:
       self._eat(TokenType.COMMA)
-      declarations.append(ASTNode(ASTNodeType.ID, self._id()))
+      declarations.append(ASTNode(ASTNodeType.ID, self._id_token()))
     self._eat(TokenType.COLON)
     node = ASTNode(ASTNodeType.DECLARATION, self._var_type(), declarations)
     return node
@@ -119,7 +123,7 @@ class Parser:
 
   def _assign(self) -> ASTNode:
     # ID := logic
-    var_name = self._id()
+    var_name = self._id_token()
     self._eat(TokenType.ASSIGN)
     return ASTNode(ASTNodeType.ASSIGN, var_name, [self._logic()])
 
@@ -130,7 +134,7 @@ class Parser:
   def _func_decl(self) -> ASTNode:
     # FUNCTION ID ( func_params ) : func_type ; block ;
     self._eat(TokenType.FUNCTION)
-    func_name = self._id()
+    func_name = self._id_token()
     self._eat(TokenType.LEFT_PAREN)
     node = ASTNode(ASTNodeType.FUNC_DECL, func_name, [])
     if self.cur_token.type != TokenType.RIGHT_PAREN:
@@ -163,7 +167,7 @@ class Parser:
 
   def _call(self) -> ASTNode:
     # ID ( func_args? )
-    func_name = self._id()
+    func_name = self._id_token()
     self._eat(TokenType.LEFT_PAREN)
     node = ASTNode(ASTNodeType.CALL, func_name, [])
     if self.cur_token.type != TokenType.RIGHT_PAREN:
@@ -293,9 +297,7 @@ class Parser:
       self._eat(TokenType.VALUE)
       return ASTNode(ASTNodeType.VALUE, token)
     if token.type == TokenType.ID:
-      if self._lexer.cur_char == TokenType.LEFT_PAREN.value:
-        return self._call()
-      return ASTNode(ASTNodeType.ID, self._id())
+      return self._id()
     if token.type == TokenType.LEFT_PAREN:
       self._eat(TokenType.LEFT_PAREN)
       node = self._logic()
@@ -311,24 +313,39 @@ class Parser:
   # ========================================================================= #
 
   def _peek(self) -> ASTNode:
-    # ^ logic
+    # ^ ID | ^ ( logic )
     token = self.cur_token
     self._eat(TokenType.CARET)
-    return ASTNode(ASTNodeType.PEEK, token, [self._logic()])
+    if self.cur_token.type == TokenType.ID:
+      return ASTNode(ASTNodeType.PEEK, token, [self._id()])
+    self._eat(TokenType.LEFT_PAREN)
+    node = ASTNode(ASTNodeType.PEEK, token, [self._logic()])
+    self._eat(TokenType.RIGHT_PAREN)
+    return node
 
   def _poke(self) -> ASTNode:
-    # ^ logic := logic
+    # (^ ID |  ^ ( logic ) ) := logic
     token = self.cur_token
     self._eat(TokenType.CARET)
-    ptr = self._logic()
+    if self.cur_token.type == TokenType.ID:
+      ptr = self._id()
+    else:
+      self._eat(TokenType.LEFT_PAREN)
+      ptr = self._logic()
+      self._eat(TokenType.RIGHT_PAREN)
     self._eat(TokenType.ASSIGN)
     return ASTNode(ASTNodeType.POKE, token, [ptr, self._logic()])
 
   def _ref(self) -> ASTNode:
-    # @ logic
+    # @ ID | @ ( logic )
     token = self.cur_token
     self._eat(TokenType.AT)
-    return ASTNode(ASTNodeType.REF, token, [self._logic()])
+    if self.cur_token.type == TokenType.ID:
+      return ASTNode(ASTNodeType.REF, token, [self._id()])
+    self._eat(TokenType.LEFT_PAREN)
+    node = ASTNode(ASTNodeType.REF, token, [self._logic()])
+    self._eat(TokenType.RIGHT_PAREN)
+    return node
 
   def _cast(self) -> ASTNode:
     # CAST logic TO var_type

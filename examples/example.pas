@@ -4,8 +4,9 @@ s: STRING;
 
 { INCLUDE IOLIBS }
 
-FUNCTION fib(n: integer): integer;
+FUNCTION fib(n: INTEGER): INTEGER;
 BEGIN
+  IF n <= 2 THEN write(itoa(n), strlen(itoa(n)));
   IF NOT (n > 2) THEN RETURN 1;
   RETURN fib(n - 1) + fib(n - 2);
 END;
