@@ -1,19 +1,21 @@
-# =========================================================================== #
-# STD LIBS                                                                    #
-# =========================================================================== #
+PROGRAM BUILTIN;
 
-VAR_DECL = """
+{ =========================================================================== }
+{ VARIABLES                                                                   }
+{ =========================================================================== }
+
 VAR BuiltInHeap: POINTER;
-"""
 
-EXIT = """
+
+{ =========================================================================== }
+{ STD LIBS                                                                    }
+{ =========================================================================== }
+
 FUNCTION exit(code: INTEGER): VOID;
 BEGIN
   SYSCALL(60, code);
 END;
-"""
 
-MALLOC = """
 FUNCTION malloc(n: INTEGER): POINTER;
 VAR heapsz, prot, flags, fd, offset, tmp: INTEGER;
 result: POINTER;
@@ -32,13 +34,12 @@ BEGIN
   BuiltInHeap := BuiltInHeap + n;
   RETURN result;
 END;
-"""
 
-# =========================================================================== #
-# STR LIBS                                                                    #
-# =========================================================================== #
 
-STRNEW = """
+{ =========================================================================== }
+{ STRING LIBS                                                                 }
+{ =========================================================================== }
+
 FUNCTION strnew(cap: INTEGER): POINTER;
 VAR addr, iaddr: POINTER;
 BEGIN
@@ -47,23 +48,17 @@ BEGIN
   ^(addr + 8) := cap;
   RETURN addr + 16;
 END;
-"""
 
-STRLEN = """
 FUNCTION strlen(s: POINTER): INTEGER;
 BEGIN
   RETURN ^(s - 16);
 END;
-"""
 
-STRCAP = """
 FUNCTION strcap(s: POINTER): INTEGER;
 BEGIN
   RETURN ^(s - 8);
 END;
-"""
 
-APPEND = """
 FUNCTION strappend(s: POINTER; ch: INTEGER): POINTER;
 VAR len: INTEGER;
 BEGIN
@@ -72,9 +67,7 @@ BEGIN
   ^(s - 16) := len + 1;
   RETURN s;
 END;
-"""
 
-STRREV = """
 FUNCTION strrev(s: POINTER): POINTER;
 VAR r: POINTER; i: INTEGER;
 BEGIN
@@ -87,9 +80,7 @@ BEGIN
   END;
   RETURN r;
 END;
-"""
 
-ITOA = """
 FUNCTION itoa(i: INTEGER): POINTER;
 VAR s: POINTER; d: INTEGER;
 BEGIN
@@ -103,9 +94,7 @@ BEGIN
   END;
   return strrev(s);
 END;
-"""
 
-ATOI = """
 FUNCTION atoi(s: POINTER): INTEGER;
 VAR result, i: INTEGER;
 BEGIN
@@ -118,20 +107,17 @@ BEGIN
   END;
   RETURN result;
 END;
-"""
 
-# =========================================================================== #
-# IO LIBS                                                                     #
-# =========================================================================== #
 
-WRITE = """
+{ =========================================================================== }
+{ IO LIBS                                                                     }
+{ =========================================================================== }
+
 FUNCTION write(s: POINTER; len: INTEGER): VOID;
 BEGIN
   SYSCALL(1, 1, s, len);
 END;
-"""
 
-WRITELN = """
 FUNCTION writeln(s: POINTER; len: INTEGER): VOID;
 BEGIN
   SYSCALL(1, 1, s, len);
@@ -139,16 +125,12 @@ BEGIN
   strappend(s, 10);
   SYSCALL(1, 1, s, 1);
 END;
-"""
 
-WRITE_STR = """
 FUNCTION writestr(s: STRING; len: INTEGER): VOID;
 BEGIN
   write(CAST s TO POINTER, len);
 END;
-"""
 
-WRITELN_STR = """
 FUNCTION writelnstr(s: STRING; len: INTEGER): VOID;
 VAR tmp: POINTER;
 BEGIN
@@ -157,9 +139,7 @@ BEGIN
   strappend(tmp, 10);
   write(tmp, 1);
 END;
-"""
 
-INPUT = """
 FUNCTION input(len: INTEGER): POINTER;
 VAR result, tmp: POINTER; nread, i: INTEGER;
 BEGIN
@@ -175,18 +155,7 @@ BEGIN
   END;
   RETURN result;
 END;
-"""
 
-# =========================================================================== #
-# BUILT-IN CODES                                                              #
-# =========================================================================== #
-
-STDLIBS = [VAR_DECL, EXIT, MALLOC]
-STRLIBS = [*STDLIBS, STRNEW, STRLEN, STRCAP, APPEND, STRREV, ITOA, ATOI]
-IOLIBS = [*STRLIBS, WRITE, WRITELN, WRITE_STR, WRITELN_STR, INPUT]
-
-BUILT_IN_CODES = {
-    "STDLIBS": STDLIBS,
-    "STRLIBS": STRLIBS,
-    "IOLIBS": IOLIBS,
-}
+BEGIN
+  BuiltInHeap := CAST 0 TO POINTER;
+END;
