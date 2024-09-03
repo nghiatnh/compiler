@@ -15,9 +15,10 @@ class Compiler:
   """
   Compiler
   ========
-  Compiler class is responsible for compiling source code into machine code. It orchestrates
-  various stages of the compilation process, including macro compilation, lexical analysis, parsing,
-  semantic analysis, and code generation.
+  Compiler class is responsible for compiling source code into machine code.
+  It orchestrates various stages of the compilation process, including macro 
+  compilation, lexical analysis, parsing, semantic analysis, and code 
+  generation.
   """
 
   def compile(self, text: str) -> bytes:

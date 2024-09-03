@@ -162,6 +162,10 @@ class BinaryOp(Enum):
 # Constants                                                                   #
 # =========================================================================== #
 
+# =========================================================================== #
+# Token groups                                                                #
+# =========================================================================== #
+
 PUNCTUATIONS = {
     TokenType.LEFT_PAREN.value: TokenType.LEFT_PAREN,
     TokenType.RIGHT_PAREN.value: TokenType.RIGHT_PAREN,
@@ -222,6 +226,11 @@ KEYWORDS = {
 }
 
 
+# =========================================================================== #
+# ELFGenerator                                                                #
+# =========================================================================== #
+
+
 ELF64_TYPE_SIZE = {
     "addr": 8,  # 8 unsigned program address
     "off": 8,  # 8 unsigned file offset
@@ -236,7 +245,8 @@ ELF64_TYPE_SIZE = {
 }
 
 ELF64_EHDR = [
-    ("e_ident", "double_xword"),  # ELF identification (actually 16-length array of unsigned char)
+    # ELF identification (actually 16-length array of unsigned char)
+    ("e_ident", "double_xword"),
     ("e_type", "half"),  # Object file type
     ("e_machine", "half"),  # Machine type
     ("e_version", "word"),  # Object file version

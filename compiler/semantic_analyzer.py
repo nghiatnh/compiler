@@ -1,3 +1,6 @@
+from typing import List, Union
+from dataclasses import dataclass
+
 from compiler.ast_node import ASTNode
 from compiler.symbol_table import SymbolTable, VarSymbol, FuncSymbol
 from compiler.error_reporter import ErrorType, CompileError, ErrorReporter
@@ -6,6 +9,13 @@ from compiler.constants import ReturnType
 from compiler.constants import TokenType
 
 
+NON_VOID_TYPES = [
+    ReturnType.INTEGER, ReturnType.BOOLEAN,
+    ReturnType.STRING, ReturnType.POINTER
+]
+
+
+@dataclass
 class Function:
   """
   Function
@@ -13,20 +23,11 @@ class Function:
   Function class is a class that is used to represent a function in the symbol
   table. It contains a function symbol and a reference to the parent function.
   """
-
-  def __init__(self, symbol: FuncSymbol, parent: "Function" = None) -> None:
-    self._symbol = symbol
-    self._parent = parent
-
-  @property
-  def symbol(self) -> FuncSymbol:
-    return self._symbol
-
-  @property
-  def parent(self) -> "Function":
-    return self._parent
+  symbol: FuncSymbol
+  parent: "Function" = None
 
 
+@dataclass
 class Loop:
   """
   Loop
@@ -34,20 +35,14 @@ class Loop:
   Loop class is a class that is used to represent a loop in the symbol table.
   It contains a reference to the parent loop.
   """
-
-  def __init__(self, parent: "Loop" = None) -> None:
-    self._parent = parent
-
-  @property
-  def parent(self) -> "Loop":
-    return self._parent
+  parent: "Loop" = None
 
 
 class SemanticAnalyzer:
   """
   SemanticAnalyzer
   ================
-  The SemanticAnalyzer class is a class that is used to perform semantic
+  SemanticAnalyzer class is a class that is used to perform semantic
   analysis on the abstract syntax tree. It checks for semantic errors such as
   undeclared variables and functions and type mismatches.
   """
@@ -62,8 +57,24 @@ class SemanticAnalyzer:
   # Private methods                                                           #
   # ========================================================================= #
 
-  def _error(self, error_type: ErrorType, node: ASTNode, message: str = "") -> CompileError:
+  def _error(
+      self, error_type: ErrorType, node: ASTNode, message: str = ""
+  ) -> CompileError:
     return self._error_reporter.error_token(error_type, node.token, message)
+
+  def _type_check(
+      self, node: ASTNode,
+      expect: Union[List[ReturnType], ReturnType],
+      actual: ReturnType,
+  ):
+    if not isinstance(expect, list):
+      expect = [expect]
+    if actual not in expect:
+      expect_str = ", ".join([e.name for e in expect])
+      raise self._error(
+          ErrorType.TYPE_MISMATCH, node,
+          f"Type mismatch, expect {expect_str}, got {actual.name}"
+      )
 
   def _enter_scope(self, scope: SymbolTable):
     if self._current_scope is not None:
@@ -145,13 +156,8 @@ class SemanticAnalyzer:
   def _analyze_assign(self, node: ASTNode) -> ReturnType:
     left_type = self._analyze_id(node)
     right_type = self._analyze(node.children[0])
-    if right_type != left_type:
-      raise self._error(
-          ErrorType.TYPE_MISMATCH, node,
-          f"Type mismatch {left_type.name} and {right_type.name}"
-      )
-    if left_type == ReturnType.VOID:
-      raise self._error(ErrorType.INVALID_ASSIGNMENT, node, "Invalid type VOID")
+    self._type_check(node, left_type, right_type)
+    self._type_check(node, NON_VOID_TYPES, left_type)
     return ReturnType.VOID
 
   def _analyze_type(self, node: ASTNode) -> ReturnType:
@@ -186,12 +192,7 @@ class SemanticAnalyzer:
     if self._current_scope.parent is not None:
       self._current_scope.parent.add(func_symbol)
     return_type = self._analyze(block)
-    if func_symbol.type != return_type:
-      raise self._error(
-          ErrorType.TYPE_MISMATCH, node,
-          (f"Type mismatch {func_symbol.type.name} and "
-           f"{return_type.name}"),
-      )
+    self._type_check(node, func_symbol.type, return_type)
     self._leave_function()
     self._leave_scope()
     return ReturnType.VOID
@@ -200,9 +201,15 @@ class SemanticAnalyzer:
     func_name = node.token.value
     _, func_symbol = self._current_scope.lookup(func_name)
     if func_symbol is None:
-      raise self._error(ErrorType.UNDECLARED_IDENTIFIER, node, f"Function undefined '{func_name}'")
+      raise self._error(
+          ErrorType.UNDECLARED_IDENTIFIER, node,
+          f"Function undefined '{func_name}'"
+      )
     if not isinstance(func_symbol, FuncSymbol):
-      raise self._error(ErrorType.DUPLICATE_DECLARATION, node, f"'{func_name}' is not a function")
+      raise self._error(
+          ErrorType.DUPLICATE_DECLARATION, node,
+          f"'{func_name}' is not a function"
+      )
     if len(func_symbol.param_types) != len(node.children):
       raise self._error(
           ErrorType.INVALID_ARGUMENT, node,
@@ -211,12 +218,7 @@ class SemanticAnalyzer:
       )
     for i, child in enumerate(node.children):
       ret_type = self._analyze(child)
-      if ret_type != func_symbol.param_types[i]:
-        raise self._error(
-            ErrorType.TYPE_MISMATCH, node,
-            f"Argument type mismatch {func_symbol.param_types[i].name} and "
-            f"{ret_type.name}",
-        )
+      self._type_check(node, func_symbol.param_types[i], ret_type)
     return func_symbol.type
 
   def _analyze_syscall(self, node: ASTNode) -> ReturnType:
@@ -232,10 +234,7 @@ class SemanticAnalyzer:
       )
     for child in node.children:
       ret_type = self._analyze(child)
-      if ret_type == ReturnType.VOID:
-        raise self._error(
-            ErrorType.INVALID_ARGUMENT, node, "Invalid argument type VOID",
-        )
+      self._type_check(node, [ReturnType.INTEGER, ReturnType.POINTER], ret_type)
     return ReturnType.INTEGER
 
   def _analyze_return(self, node: ASTNode) -> ReturnType:
@@ -246,11 +245,7 @@ class SemanticAnalyzer:
       )
     return_type = self._analyze(node.children[0])
     if self._current_func.symbol.type != return_type:
-      raise self._error(
-          ErrorType.TYPE_MISMATCH, node,
-          f"Return type mismatch {self._current_func.symbol.type.name} "
-          f"and {return_type.name}"
-      )
+      self._type_check(node, self._current_func.symbol.type, return_type)
     return return_type
 
   # ========================================================================= #
@@ -260,87 +255,51 @@ class SemanticAnalyzer:
   def _analyze_binary_op(self, node: ASTNode) -> ReturnType:
     left_type = self._analyze(node.children[0])
     right_type = self._analyze(node.children[1])
-    if left_type not in [ReturnType.POINTER, right_type]:
-      raise self._error(
-          ErrorType.TYPE_MISMATCH, node,
-          f"Type mismatch {left_type.name} and {right_type.name}"
-      )
-    if left_type == ReturnType.VOID:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          "Invalid type VOID"
-      )
+    self._type_check(node, [ReturnType.POINTER, right_type], left_type)
+    self._type_check(node, NON_VOID_TYPES, left_type)
 
     # Only operate AND/OR on BOOLEAN type
     if node.token.type in (TokenType.AND, TokenType.OR):
-      if left_type != ReturnType.BOOLEAN:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {left_type.name}"
-        )
+      self._type_check(node, ReturnType.BOOLEAN, left_type)
       return ReturnType.BOOLEAN
 
-    # Can not operate comparision on BOOLEAN type
+    # Only operate comparision on INTEGER and POINTER type
     if node.token.type in (
         TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.LE,
         TokenType.GT, TokenType.GE
     ):
-      if left_type == ReturnType.BOOLEAN:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {left_type.name}"
-        )
+      self._type_check(
+          node, [ReturnType.INTEGER, ReturnType.POINTER], left_type
+      )
       return ReturnType.BOOLEAN
 
     # Only operate PLUS/MINUS on INTEGER and POINTER type
     if node.token.type in [TokenType.PLUS, TokenType.MINUS]:
-      if left_type not in [ReturnType.INTEGER, ReturnType.POINTER]:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {left_type.name}"
-        )
+      self._type_check(
+          node, [ReturnType.INTEGER, ReturnType.POINTER], left_type
+      )
       if left_type == ReturnType.POINTER:
         # If pointer, it should be MOV_PTR instead of ADD/SUB
-        if right_type != ReturnType.INTEGER:
-          raise self._error(
-              ErrorType.TYPE_MISMATCH, node,
-              f"Type mismatch {ReturnType.INTEGER.name} and {right_type.name}"
-          )
-        node.type = ASTNodeType.MOV_PTR
+        self._type_check(node, ReturnType.INTEGER, right_type)
+        node.update_type(ASTNodeType.MOV_PTR)
 
     # Only operate DIV/MOD/MUL on INTEGER type
     if node.token.type in [TokenType.SLASH, TokenType.PERCENT, TokenType.STAR]:
-      if left_type != ReturnType.INTEGER:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {left_type.name}"
-        )
+      self._type_check(node, ReturnType.INTEGER, left_type)
 
     return left_type
 
   def _analyze_unary_op(self, node: ASTNode) -> ReturnType:
     return_type = self._analyze(node.children[0])
-    if return_type == ReturnType.VOID:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          "Invalid type VOID"
-      )
+    self._type_check(node, NON_VOID_TYPES, return_type)
 
     # Only operate NOT on BOOLEAN type
     if node.token.type == TokenType.NOT:
-      if return_type != ReturnType.BOOLEAN:
-        raise self._error(
-            ErrorType.INVALID_OPERATION, node,
-            f"Invalid type {return_type.name}"
-        )
+      self._type_check(node, ReturnType.BOOLEAN, return_type)
       return ReturnType.BOOLEAN
 
     # Only operate PLUS/MINUS on INTEGER type
-    if return_type != ReturnType.INTEGER:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {return_type.name}"
-      )
+    self._type_check(node, ReturnType.INTEGER, return_type)
     return return_type
 
   def _analyze_statements(self, node: ASTNode) -> ReturnType:
@@ -387,50 +346,32 @@ class SemanticAnalyzer:
 
   def _analyze_peek(self, node: ASTNode) -> ReturnType:
     return_type = self._analyze(node.children[0])
-    if return_type != ReturnType.POINTER:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {return_type.name}"
-      )
+    self._type_check(node, ReturnType.POINTER, return_type)
     return ReturnType.INTEGER
 
   def _analyze_poke(self, node: ASTNode) -> ReturnType:
     var_type = self._analyze(node.children[0])
-    if var_type != ReturnType.POINTER:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {var_type.name}"
-      )
+    self._type_check(node, ReturnType.POINTER, var_type)
     return_type = self._analyze(node.children[1])
-    if return_type != ReturnType.INTEGER:
-      raise self._error(
-          ErrorType.TYPE_MISMATCH, node,
-          f"Type mismatch {ReturnType.INTEGER.name} and {return_type.name}"
-      )
+    self._type_check(node, ReturnType.INTEGER, return_type)
     return ReturnType.VOID
 
   def _analyze_ref(self, node: ASTNode) -> ReturnType:
     var_type = self._analyze(node.children[0])
-    if var_type not in [ReturnType.INTEGER, ReturnType.STRING]:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid type {var_type.name}"
-      )
+    self._type_check(node, [ReturnType.INTEGER, ReturnType.STRING], var_type)
     return ReturnType.POINTER
 
   def _analyze_cast(self, node: ASTNode) -> ReturnType:
     return_type = self._analyze(node.children[0])
     cast_type = ReturnType(node.token.type.value)
-    if return_type == ReturnType.VOID:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          "Invalid type VOID"
-      )
+    self._type_check(node, NON_VOID_TYPES, return_type)
+    if return_type == cast_type:
+      return cast_type
     allowed_casts = {
-        ReturnType.INTEGER: [ReturnType.INTEGER, ReturnType.POINTER],
-        ReturnType.BOOLEAN: [ReturnType.BOOLEAN],
-        ReturnType.STRING: [ReturnType.STRING, ReturnType.POINTER],
-        ReturnType.POINTER: [ReturnType.INTEGER, ReturnType.POINTER],
+        ReturnType.INTEGER: [ReturnType.POINTER, ReturnType.BOOLEAN],
+        ReturnType.BOOLEAN: [ReturnType.INTEGER],
+        ReturnType.STRING: [ReturnType.POINTER],
+        ReturnType.POINTER: [ReturnType.INTEGER],
     }
     if cast_type not in allowed_casts[return_type]:
       raise self._error(
@@ -445,11 +386,7 @@ class SemanticAnalyzer:
 
   def _analyze_control_flow(self, node: ASTNode) -> ReturnType:
     condition_type = self._analyze(node.children[0])
-    if condition_type != ReturnType.BOOLEAN:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid condition type {condition_type.name}"
-      )
+    self._type_check(node, ReturnType.BOOLEAN, condition_type)
     for child in node.children[1:]:
       self._analyze(child)
     return ReturnType.VOID
@@ -461,11 +398,7 @@ class SemanticAnalyzer:
   def _analyze_loop(self, node: ASTNode) -> ReturnType:
     self._enter_loop(Loop(self._current_loop))
     condition_type = self._analyze(node.children[0])
-    if condition_type != ReturnType.BOOLEAN:
-      raise self._error(
-          ErrorType.INVALID_OPERATION, node,
-          f"Invalid condition type {condition_type.name}"
-      )
+    self._type_check(node, ReturnType.BOOLEAN, condition_type)
     for child in node.children[1:]:
       self._analyze(child)
     self._leave_loop()

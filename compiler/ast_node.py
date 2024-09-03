@@ -41,28 +41,27 @@ class ASTNode:
       dot.edge(str(id(node)), str(id(child)))
 
   # ========================================================================= #
-  # Properties                                                                #
+  # Public methods                                                            #
   # ========================================================================= #
 
   @property
   def token(self) -> Token:
+    """The token of the node."""
     return self._token
 
   @property
   def children(self) -> List["ASTNode"]:
+    """The children nodes of the node."""
     return self._children
 
   @property
   def type(self) -> ASTNodeType:
+    """The type of the node."""
     return self._type
 
-  @type.setter
-  def type(self, value: ASTNodeType):
+  def update_type(self, value: ASTNodeType):
+    """Update the type of the node."""
     self._type = value
-
-  # ========================================================================= #
-  # Public methods                                                            #
-  # ========================================================================= #
 
   def render_tree(self, filename: str):
     """

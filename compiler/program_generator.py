@@ -27,7 +27,8 @@ class ELF64Generator:
   """
   ELF64Generator
   ==============
-  ELF64Generator is a class that generates an ELF64 file from a given code.
+  ELF64Generator is a class that generates an ELF64 file from a given machine
+  code.
   """
 
   # ===================== #
@@ -59,7 +60,9 @@ class ELF64Generator:
       return x.to_bytes(size, "little")
     if isinstance(x, bytes):
       if len(x) != size:
-        self._error(f"data length {len(x)} != type {elf64_type} length of {size}")
+        self._error(
+            f"data length {len(x)} != type {elf64_type} length of {size}"
+        )
       return x
     raise self._error(f"can't _serialize {x} of type {elf64_type}")
 
@@ -79,7 +82,8 @@ class ELF64Generator:
         b"\x02",  # ELF64
         b"\x01",  # Little-endian
         b"\x01",  # EI_ABIVERSION
-        b"\x00",  # ELFOSABI_HPUX ?? # ELFOSABI_SYSV (TODO: \x04 instead? LINUX?)
+        # ELFOSABI_HPUX ?? # ELFOSABI_SYSV (TODO: \x04 instead? LINUX?)
+        b"\x00",
         b"\x00",  #  epends on EI_ABIVERSION
         b"\x00" * 6,  #  Padding
         b"\x00",  #  size of e_ident ??
@@ -124,20 +128,20 @@ class ELF64Generator:
     return self._serialize_struct(
         ELF64_PHDR,
         {
-            "p_type": PT_LOAD,              # loadable segment
+            "p_type": PT_LOAD,  # loadable segment
             "p_flags": PF_R | PF_W | PF_X,  # readable, writable, executable
-            "p_offset": p_offset,           # offset in bytes from start of file
-            "p_vaddr": p_vaddr,             # virtual address in memory
-            "p_paddr": p_paddr,             # unused? reserved for physical addressing
-            "p_filesz": p_filesz,           # size in bytes of *file image* of segment
-            "p_memsz": p_memsz,             # size in bytes of *memory image* of segment
-            "p_align": 0x4,                 # alignment (136/4)
+            "p_offset": p_offset,  # offset in bytes from start of file
+            "p_vaddr": p_vaddr,  # virtual address in memory
+            "p_paddr": p_paddr,  # unused? reserved for physical addressing
+            "p_filesz": p_filesz,  # size in bytes of *file image* of segment
+            "p_memsz": p_memsz,  # size in bytes of *memory image* of segment
+            "p_align": 0x4,  # alignment (136/4)
         }
     )
 
-  # ============================================================================================= #
-  # Public methods                                                                                #
-  # ============================================================================================= #
+  # ========================================================================= #
+  # Public methods                                                            #
+  # ========================================================================= #
 
   def generate(self, code: bytes) -> bytes:
     """

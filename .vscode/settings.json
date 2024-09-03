@@ -6,12 +6,12 @@
   },
   "autopep8.args": [
     "--max-line-length",
-    "100",
+    "80",
     "--experimental",
     "--indent-size",
     "2",
   ],
-  "editor.rulers": [80, 100],
+  "editor.rulers": [80],
   "editor.tabSize": 2,
   "editor.indentSize": "tabSize",
 }

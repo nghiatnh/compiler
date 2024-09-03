@@ -11,7 +11,7 @@ class ReturnData:
   """
   ReturnData
   ==========
-  A class to represent the return data of a function.
+  ReturnData is a class to represent the return data of a function.
   """
   rtype: ReturnType = ReturnType.VOID
   index: int = -1
@@ -21,7 +21,7 @@ class Symbol:
   """
   Symbol
   ======
-  A class to represent a symbol in the symbol table.
+  Symbol is a class to represent a symbol in the symbol table.
   """
 
   def __init__(self, name: str, data: ReturnData = None):
@@ -41,7 +41,7 @@ class Symbol:
     self.data.index = value
 
   def __repr__(self) -> str:
-    return f"<Symbol\t{self.name}>"
+    return f"<Symbol {self.name}>"
 
   def __str__(self) -> str:
     return self.__repr__()
@@ -51,21 +51,25 @@ class VarSymbol(Symbol):
   """
   VarSymbol
   =========
-  A class to represent a variable symbol in the symbol table.
+  VarSymbol is a class to represent a variable symbol in the symbol table.
   """
 
   def __init__(self, name: str, var_type: ReturnType):
     super().__init__(name, ReturnData(rtype=var_type))
 
   def __repr__(self) -> str:
-    return f"<VarSymbol\t{self.name}:\t{self.type.name}>"
+    return f"<VarSymbol {self.name}: {self.type.name}>"
+
+  def __str__(self) -> str:
+    return self.__repr__()
 
 
 class FuncSymbol(Symbol):
   """
-  ProcDeclSymbol
-  ==============
-  A class to represent a procedure declaration symbol in the symbol table.
+  FuncSymbol
+  ==========
+  FuncSymbol is a class to represent a procedure declaration symbol in the
+  symbol table.
   """
 
   def __init__(
@@ -81,14 +85,17 @@ class FuncSymbol(Symbol):
 
   def __repr__(self) -> str:
     param_types = ", ".join([x.name for x in self.param_types])
-    return f"<FuncSymbol\t{self.name}\t({param_types}):\t{self.type.name}>"
+    return f"<FuncSymbol {self.name} ({param_types}): {self.type.name}>"
+
+  def __str__(self) -> str:
+    return self.__repr__()
 
 
 class SymbolTable:
   """
   SymbolTable
   ===========
-  A class to represent a symbol table.
+  SymbolTable is a class to represent a symbol table.
   """
 
   def __init__(self, name: str, level: int, parent: "SymbolTable" = None):
@@ -101,7 +108,7 @@ class SymbolTable:
     self.stack = 0
     self.labels = []
 
-  def __str__(self) -> str:
+  def __repr__(self) -> str:
     h1 = "SCOPE INFO"
     lines = ["\n", h1, "=" * len(h1)]
     for header_name, header_value in (
@@ -122,8 +129,8 @@ class SymbolTable:
     s = "\n".join(lines)
     return s
 
-  def __repr__(self) -> str:
-    return str(self)
+  def __str__(self) -> str:
+    return self.__repr__()
 
   # ========================================================================= #
   # Public methods                                                            #
@@ -142,6 +149,7 @@ class SymbolTable:
     """
     Lookup a symbol in the symbol table. If the symbol is not found in the
     current symbol table, lookup in the parent symbol table if it exists.
+    Return the level of the symbol and the symbol itself.
     """
     symbol = self._symbols.get(name.upper(), None)
     if symbol is not None:

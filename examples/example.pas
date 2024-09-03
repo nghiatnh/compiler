@@ -1,18 +1,17 @@
 PROGRAM fibonacci;
-VAR heap, str, ref: POINTER;
+VAR str, ref: POINTER;
 s: STRING;
 
 { INCLUDE IOLIBS }
 
 FUNCTION fib(n: integer): integer;
 BEGIN
-  IF n <= 2 THEN RETURN 1;
+  IF NOT (n > 2) THEN RETURN 1;
   RETURN fib(n - 1) + fib(n - 2);
 END;
 
 BEGIN
   writestr('Enter a number: ', 16);
-  heap := CAST 0 TO POINTER;
   str := input(10);
   ref := @atoi(str);
   ^ref := (^ref) + 1;

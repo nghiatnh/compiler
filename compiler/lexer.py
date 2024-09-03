@@ -10,8 +10,8 @@ from compiler.constants import OPERATORS2CHAR
 class Lexer:
   """
   Lexer
-  ===========
-  The lexer class is responsible for reading the source code and returning
+  =====
+  Lexer class is responsible for reading the source code and returning
   tokens. It reads the source code character by character and returns the next
   token. It skips whitespaces and comments.
   """
@@ -30,6 +30,11 @@ class Lexer:
   @property
   def _is_eof(self) -> bool:
     return self._pos >= len(self._text)
+
+  @property
+  def _next_char(self) -> str:
+    next_pos = self._pos + 1
+    return self._text[next_pos] if next_pos < len(self._text) else None
 
   def _error(
       self,
@@ -55,8 +60,9 @@ class Lexer:
       self._move_next()
 
   def _skip_comment(self):
-    save = (self._line, self._column - 1)
-    while self.cur_char is not None and self.cur_char != TokenType.RIGHT_BRACE.value:
+    save = self._line, self._column
+    while (self.cur_char is not None and
+           self.cur_char != TokenType.RIGHT_BRACE.value):
       self._move_next()
     if self.cur_char is None:
       raise self._error(ErrorType.UNCLOSED_COMMENT, *save, "Unclosed comment")
@@ -87,12 +93,21 @@ class Lexer:
       self._move_next()
     return cur
 
-  def _seek(self) -> str:
-    return self._text[self._pos + 1] if self._pos + 1 < len(self._text) else None
+  def _alpha(self) -> Token:
+    line, column = self._line, self._column
+    _id = self._identifier()
+    upper = _id.upper()
+    if upper in [TokenType.TRUE.value, TokenType.FALSE.value]:
+      value = upper == TokenType.TRUE.value
+      return Token(line, column, TokenType.VALUE, value)
+    if upper in KEYWORDS:
+      return Token(line, column, KEYWORDS[upper], _id)
+    return Token(line, column, TokenType.ID, _id)
 
   # ========================================================================= #
   # Public methods                                                            #
   # ========================================================================= #
+
   @property
   def cur_char(self) -> str:
     """
@@ -113,7 +128,6 @@ class Lexer:
         continue
 
       if self.cur_char == TokenType.LEFT_BRACE.value:
-        self._move_next()
         self._skip_comment()
         continue
 
@@ -122,7 +136,8 @@ class Lexer:
 
       if cur_char == TokenType.RIGHT_BRACE.value:
         raise self._error(
-            ErrorType.UNMATCHED_COMMENT, self._line, self._column, "Unmatched comment"
+            ErrorType.UNMATCHED_COMMENT, self._line, self._column,
+            "Unmatched comment"
         )
 
       if cur_char == TokenType.SINGLE_QUOTE.value:
@@ -133,8 +148,9 @@ class Lexer:
         return Token(line, column, TokenType.VALUE, self._number())
 
       # Must check 2 chars before punctuations to avoid ambiguity
-      if self._seek() is not None and cur_char + self._seek() in OPERATORS2CHAR:
-        cur_char += self._seek()
+      if (self._next_char is not None and
+              cur_char + self._next_char in OPERATORS2CHAR):
+        cur_char += self._next_char
         self._move_next()
         self._move_next()
         return Token(line, column, OPERATORS2CHAR[cur_char], cur_char)
@@ -148,17 +164,9 @@ class Lexer:
         return Token(line, column, OPERATORS1CHAR[cur_char], cur_char)
 
       if cur_char.isalpha():
-        _id = self._identifier()
-        upper = _id.upper()
-        if upper in [TokenType.TRUE.value, TokenType.FALSE.value]:
-          value = upper == TokenType.TRUE.value
-          return Token(line, column, TokenType.VALUE, value)
-        if upper in KEYWORDS:
-          return Token(line, column, KEYWORDS[upper], _id)
-        return Token(line, column, TokenType.ID, _id)
+        return self._alpha()
 
-      raise self._error(
-          ErrorType.INVALID_CHARACTER, self._line, self._column, f"Invalid character {cur_char}"
-      )
+      raise self._error(ErrorType.INVALID_CHARACTER, self._line,
+                        self._column, f"Invalid character {cur_char}")
 
     return Token(self._line, self._column, TokenType.EOF)

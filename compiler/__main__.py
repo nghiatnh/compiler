@@ -16,7 +16,9 @@ class CompilerParams:
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(
-      prog="compiler", description="Compiler for the Pascal-like programming language")
+      prog="compiler",
+      description="Compiler for the Pascal-like programming language",
+  )
   parser.add_argument("filename", help="Input file")
   parser.add_argument("-o", "--output", help="Output file", default="main.elf")
   parser.add_argument(
@@ -29,11 +31,11 @@ if __name__ == "__main__":
   LOGGER.info("Reading code from %s", args.filename)
   with open(args.filename, "r", encoding="utf-8") as f:
     text = f.read()
-  MACHINE_CODE = Compiler().compile(text)
+  machine_code = Compiler().compile(text)
   LOGGER.info("Writing machine code to %s", args.output)
   if os.path.exists(args.output):
     os.unlink(args.output)
   fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o755)
   with os.fdopen(fd, "wb", closefd=True) as fp:
-    fp.write(MACHINE_CODE)
+    fp.write(machine_code)
   LOGGER.info("Compilation successful!")

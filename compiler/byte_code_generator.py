@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+from dataclasses import dataclass
 
 from compiler.ast_node import ASTNode
 from compiler.byte_code import ByteCode
@@ -10,17 +11,16 @@ from compiler.constants import OpCode
 from compiler.constants import BinaryOp
 
 
+@dataclass
 class Loop:
   """
   Loop
   ====
   Loop class to represent a loop in the code generator.
   """
-
-  def __init__(self, start: int, end: int, parent: "Loop") -> None:
-    self.start = start
-    self.end = end
-    self.parent = parent
+  start: int
+  end: int
+  parent: "Loop" = None
 
 
 class ByteCodeGenerator:
@@ -45,9 +45,7 @@ class ByteCodeGenerator:
   def _flat_scopes(
       self, scope: SymbolTable
   ) -> Dict[Tuple[int, str], SymbolTable]:
-    scopes = {
-        (scope.level, scope.name): scope
-    }
+    scopes = {(scope.level, scope.name): scope}
     for child in scope.children:
       scopes.update(self._flat_scopes(child))
     return scopes
@@ -203,21 +201,20 @@ class ByteCodeGenerator:
 
   def _generate_unary_op(self, node: ASTNode) -> int:
     rindex = self._generate(node.children[0])
-    dst = self._scope.new_var()
     if node.token.type == TokenType.MINUS:
+      dst = self._scope.new_var()
       self._add_code(OpCode.NEG, [rindex, dst])
-    elif node.token.type == TokenType.PLUS:
+      return dst
+    if node.token.type == TokenType.PLUS:
       return rindex
-    else:
-      self._add_code(OpCode.NOT, [rindex, dst])
+    dst = self._scope.new_var()
+    self._add_code(OpCode.NOT, [rindex, dst])
     return dst
 
   def _generate_statements(self, node: ASTNode) -> int:
     for child in node.children:
       if child.type in [
-          ASTNodeType.RETURN,
-          ASTNodeType.BREAK,
-          ASTNodeType.CONTINUE,
+          ASTNodeType.RETURN, ASTNodeType.BREAK, ASTNodeType.CONTINUE,
       ]:
         return self._generate(child)
       self._generate(child)

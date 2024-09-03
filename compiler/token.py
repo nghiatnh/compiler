@@ -7,15 +7,16 @@ class Token:
   """
   Token
   =====
-  The token class represents a token in the source code. It contains the token
+  Token class represents a token in the source code. It contains the token
   type, value, line, and column where the token was found in the source code.
   """
+
   def __init__(
       self,
       line: int,
       column: int,
       token_type: TokenType,
-      value: Optional[Union[int, float, bool, str]] = None
+      value: Optional[Union[int, bool, str]] = None
   ):
     self.line = line
     self.column = column

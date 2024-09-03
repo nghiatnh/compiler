@@ -36,7 +36,6 @@ class MachineCodeGenerator:
     self.calls: Dict[int, List[int]] = {}  # func index -> offset list
     self.strings: Dict[str, List[int]] = {}  # string literal -> offset list
     self.scope2off = []  # func index -> offset
-    self.fields = {}
     self.vaddr = 0x4
 
   # ========================================================================= #
@@ -235,6 +234,20 @@ class MachineCodeGenerator:
     self.code.extend(b"\x48\xf7\xd8")
     self._asm_store(Registers.B, dst * 8, Registers.A)
 
+  def _not_(self, src: int, dst: int):
+    # dst = 1 - (src != 0)
+    # TODO: implement the not operation
+    self._asm_load(Registers.A, Registers.B, src * 8)
+    # test rax, rax
+    self.code.extend(b"\x48\x85\xc0")
+    # mov rdx, 1
+    self.code.extend(b"\x48\xc7\xc2\x01\x00\x00\x00")
+    # sub rdx, rax
+    self.code.extend(b"\x48\x29\xc2")
+    # mov rax, rdx
+    self.code.extend(b"\x48\x89\xd0")
+    self._asm_store(Registers.B, dst * 8, Registers.A)
+
   def _jmp_(self, label: int):
     self.code.extend(b"\xe9")  # jmp
     self.jmps.setdefault(label, []).append(len(self.code))
@@ -243,9 +256,9 @@ class MachineCodeGenerator:
   def _jmpf_(self, a1: int, label: int):
     self._load_rax(a1)
     self.code.extend(
-        b"\x48\x85\xc0"
+        b"\x48\x85\xc0"  # test rax, rax
         b"\x0f\x84"  # je
-    )  # test rax, rax
+    )
     self.jmps.setdefault(label, []).append(len(self.code))
     self.code.extend(b"\x00\x00\x00\x00")  # placeholder
 
@@ -300,7 +313,8 @@ class MachineCodeGenerator:
     arg_regs = [Registers.DI, Registers.SI, Registers.D, 10, 8, 9]
     assert len(arg_list) <= len(arg_regs)
     for i, arg in enumerate(arg_list):
-      self._asm_load(arg_regs[i], Registers.B, arg * 8)  # mov reg, [rbx + arg*8]
+      # mov reg, [rbx + arg*8]
+      self._asm_load(arg_regs[i], Registers.B, arg * 8)
     self.code.extend(b"\x0f\x05")  # syscall
     self._store_rax(dst)  # mov [rbx + dst*8], rax
 
@@ -342,7 +356,7 @@ class MachineCodeGenerator:
 
   def generate(self) -> bytes:
     """
-    Compile the program to the machine code.
+    Compile the bytecodes to the machine code.
     """
     self._code_entry()
     self._scope(self._global_scope)

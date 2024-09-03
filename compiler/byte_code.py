@@ -13,8 +13,8 @@ class ByteCode:
   opcode: OpCode
   operands: list
 
-  def __str__(self) -> str:
-    return f"{self.opcode.name} {', '.join(map(str, self.operands))}"
-
   def __repr__(self) -> str:
-    return self.__str__()
+    return f"<ByteCode {self.opcode.name} {', '.join(map(str, self.operands))}>"
+
+  def __str__(self) -> str:
+    return self.__repr__()
