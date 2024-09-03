@@ -385,7 +385,7 @@ class Parser:
     return node
 
   def _jump(self) -> ASTNode:
-    # BREAK | CONTINUE | RETURN
+    # BREAK | CONTINUE | return
     token = self.cur_token
     if token.type in [TokenType.BREAK, TokenType.CONTINUE]:
       self._eat(token.type)

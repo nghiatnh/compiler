@@ -4,9 +4,6 @@
 ### Comment
 - **comment**: `{` *any* `}`
 
-### Macros
-- **include**: `{INCLUDE` *name* `}`
-
 ### Program
 - **program**: `PROGRAM` *prog_name* `;` *block* `.`
 - **block**: *var_decl*? *func_decl** *body*
@@ -32,7 +29,7 @@
 
 ### Statements
 - **statements**: (*statement* `;`)* *statement*
-- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump* | *poke*
+- **statement**: *body* | *assign* | *call* | *control_flow* | *loop* | *jump* | *poke* | syscall
 - **logic**: *expr* ((`AND` | `OR` | `=` | `<>` | `<` | `<=` | `>` | `>=`) *expr*)*
 - **expr**: *term* ((`+` | `-`) *term*)*
 - **term**: *factor* ((`*` | `/` | `DIV` | `MOD`) *factor*)*
@@ -52,13 +49,7 @@
 - **string**: `'` .*? `'`
 
 ### Pointers
-- **peek**: `^` *logic*
-- **poke**: `^` *logic* `:=` *logic*
-- **ref**: `@` *logic*
+- **peek**: `^` (*variable* | *call* | `(` *logic* `)`)
+- **poke**: `^` (*variable* | *call* | `(` *logic* `)`) `:=` *logic*
+- **ref**: `@` (*variable* | *call* | `(` *logic* `)`)
 - **cast**: `CAST` *logic* `TO` *var_type*
-
-# Built-in Functions
-
-### Syscalls
-- **write**: write(s: `STRING`; len: `INTEGER`): `VOID`. This function is used to write a string into the `stdout`.
-- **input**: input(len: `INTEGER`): `STRING`. This function is used to read a string from the `stdin`.
