@@ -65,7 +65,7 @@ I would like to thank the following authors:
 
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE.txt) file for more details.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
 
 ## Contact
 For any questions or inquiries, please contact the project maintainer at nghiatnh02@gmail.com.
